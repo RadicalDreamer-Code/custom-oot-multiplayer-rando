@@ -1,0 +1,7 @@
+archive/*
+.env
+stats.json
+*.log
+.screenrc
+
+*.txt
