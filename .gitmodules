@@ -1,0 +1,9 @@
+[submodule "OOT-8.0.3-anchor-player-models-4/OTRExporter"]
+	path = OOT-8.0.3-anchor-player-models-4/OTRExporter
+	url = https://github.com/harbourmasters/OTRExporter
+[submodule "OOT-8.0.3-anchor-player-models-4/ZAPDTR"]
+	path = OOT-8.0.3-anchor-player-models-4/ZAPDTR
+	url = https://github.com/harbourmasters/ZAPDTR
+[submodule "OOT-8.0.3-anchor-player-models-4/libultraship"]
+	path = OOT-8.0.3-anchor-player-models-4/libultraship
+	url = https://github.com/kenix3/libultraship.git
