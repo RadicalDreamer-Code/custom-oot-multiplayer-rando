@@ -755,6 +755,7 @@ void Play_Init(GameState* thisx) {
     gSaveContext.sohStats.sceneNum = gPlayState->sceneNum;
     gSaveContext.sohStats.roomNum = gPlayState->roomCtx.curRoom.num;
     gSaveContext.respawnFlag = 0;
+
     #if 0
     if (dREG(95) != 0) {
         D_8012D1F0 = D_801614D0;
