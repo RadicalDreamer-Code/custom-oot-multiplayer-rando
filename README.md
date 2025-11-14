@@ -41,3 +41,10 @@ void CreateIceTrapRandoMessages() {
 
 // play sound
 Audio_PlayFanfare(NA_BGM_SMALL_ITEM_GET);
+
+OTRGlobals.cpp
+GetEquipNowMessage
+
+z_message_PAL.c
+Found a comment:
+// RANDOTODO: Use this for ice trap messages
