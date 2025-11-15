@@ -48,3 +48,25 @@ GetEquipNowMessage
 z_message_PAL.c
 Found a comment:
 // RANDOTODO: Use this for ice trap messages
+
+<br />
+Maybe an example how to create custom text and display it:
+
+![alt text](image.png)
+
+And we could try to replace the text always at the same textId.
+Might be easier if we just want to show the question without dialogue
+
+This in z_message_PAL.c is responsible for loading in custom text:
+![alt text](image-1.png)
+
+OTRGlobals.cpp
+![alt text](image-2.png)
+
+CustomMessageTypes.h
+![alt text](image-3.png)
+
+It could be possible to swap out the messageEntry based on the selected question out of a table.
+
+Start the test textbox:
+![alt text](image-4.png)
