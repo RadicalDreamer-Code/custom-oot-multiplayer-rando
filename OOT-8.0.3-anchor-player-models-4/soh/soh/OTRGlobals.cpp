@@ -2524,6 +2524,12 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
             } else {
                 messageEntry = CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);
             }
+        } else if (textId == TEXT_CUSTOM_QUIZ_QUESTION) {
+            printf("I get here!");
+            messageEntry = CustomMessage{ "Test", "Test", "Test" };
+            messageEntry.Format();
+            //messageEntry =
+            //    CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);
         } else if (textId == TEXT_SHEIK_NEED_HOOK || textId == TEXT_SHEIK_HAVE_HOOK) {
             messageEntry = OTRGlobals::Instance->gRandomizer->GetSheikMessage(gPlayState->sceneNum, textId);            
         // textId: TEXT_SCRUB_RANDOM + (randomizerInf - RAND_INF_SCRUBS_PURCHASED_DODONGOS_CAVERN_DEKU_SCRUB_NEAR_BOMB_BAG_LEFT)

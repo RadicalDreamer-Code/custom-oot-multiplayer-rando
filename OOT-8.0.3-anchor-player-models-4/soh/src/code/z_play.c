@@ -815,6 +815,17 @@ void Play_Update(PlayState* play) {
             play->transitionMode = TRANS_MODE_SETUP;
         }
 
+        //TEST-TEST-TEST:
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_Z)) {
+            //Play_TriggerRespawn(play);
+            //GetItemEntry getItemEntry = ItemTable_Retrieve(GI_ICE_TRAP);
+            //GiveItemEntryWithoutActor(gPlayState, getItemEntry);
+            //Player_InBlockingCsMode(play, GET_PLAYER(play));
+
+            Message_StartTextbox(play, 0x90FD, NULL);
+        }
+
+
         // Gameplay stats: Count button presses
         if (!gSaveContext.sohStats.gameComplete) {
             if (CHECK_BTN_ALL(input[0].press.button, BTN_A))      {gSaveContext.sohStats.count[COUNT_BUTTON_PRESSES_A]++;}
