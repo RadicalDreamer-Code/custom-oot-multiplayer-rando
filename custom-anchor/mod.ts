@@ -1,7 +1,8 @@
-import { writeAll } from "https://deno.land/std@0.208.0/streams/write_all.ts";
-import { readLines } from "https://deno.land/std@0.208.0/io/read_lines.ts";
 import { encodeHex } from "https://deno.land/std@0.208.0/encoding/hex.ts";
-import { getEnumNameByValue, importantItem, ItemID } from "./gameId.ts";
+import { readLines } from "https://deno.land/std@0.208.0/io/read_lines.ts";
+import { writeAll } from "https://deno.land/std@0.208.0/streams/write_all.ts";
+import { importantItem, ItemID } from "./gameId.ts";
+import { PlayerData, QuizManager } from "./questionGame/quizManager.ts";
 
 // TODO: make nicer later
 let currentMaxHealth: number = -1;
@@ -43,6 +44,11 @@ interface DecreaseHealthPacket extends BasePacket {
 
 interface IncreaseHealthPacket extends BasePacket {
   type: "INCREASE_HEALTH";
+}
+
+interface QuestionsPacket extends BasePacket {
+  type: "RECEIVE_QUESTIONS";
+  message: string;
 }
 
 interface CheckTrackerData {
@@ -111,6 +117,7 @@ type Packet =
   | ServerMessagePacket
   | AllClientDataPacket
   | PushSaveStatePacket
+  | QuestionsPacket
   | OtherPackets;
 
 interface ServerStats {
@@ -621,6 +628,19 @@ function findDelimiterIndex(data: Uint8Array): number {
   return -1;
 }
 
+// Question Game
+const manager = new QuizManager();
+await manager.loadAllPlayerFiles("./questionGame");
+
+// Assign 10 unique questions to each of 2 players
+// Each question will only be used once
+const assignments = manager.assignRandomQuestions(
+  ["player-1", "player-2"],
+  10,
+  false // no duplicates
+);
+
+// Server
 const server = new Server();
 server.start().catch((error) => {
   console.error("Error starting server: ", error);
@@ -643,7 +663,7 @@ function enableRawMode() {
 // Key input listener for single key presses
 async function setupKeyListener() {
   console.log(
-    "Key listener active. Press 'e' for emergency broadcast, 'r' for DECREASE_HEALTH packet, 'q' to quit, or any other key for help."
+    "Key listener active. Press 'e' for emergency broadcast, 'r' for DECREASE_HEALTH packet, 't' for INCREASE_HEALTH packet, 'i' to send questions, 'q' to quit, or any other key for help."
   );
 
   const buffer = new Uint8Array(1);
@@ -690,6 +710,15 @@ async function setupKeyListener() {
           );
           break;
         }
+        case "i": {
+          console.log(`\nSending questions to all clients...`);
+
+          for (const client of server.clients) {
+            sendQuestions(client);
+          }
+          console.log(`Questions sent to ${server.clients.length} clients`);
+          break;
+        }
         case "q": {
           console.log("\nExiting key listener mode...");
           if (Deno.stdin.setRaw) {
@@ -709,6 +738,8 @@ async function setupKeyListener() {
             "  'e' - Send emergency broadcast message to all clients"
           );
           console.log("  'r' - Send DECREASE_HEALTH packet to all clients");
+          console.log("  't' - Send INCREASE_HEALTH packet to all clients");
+          console.log("  'i' - Send questions to all clients");
           console.log("  'q' - Quit key listener mode");
           break;
         }
@@ -741,6 +772,19 @@ function sendDecreaseHealth(client: Client) {
 function sendIncreaseHealth(client: Client) {
   return client.sendPacket({
     type: "INCREASE_HEALTH",
+  });
+}
+
+function sendQuestions(client: Client) {
+  const questions = assignments.get("player-1")?.map((q) => q.question) || [];
+  const playerData: PlayerData = {
+    questionGame: {
+      questions: assignments.get("player-1") || [],
+    },
+  };
+  return client.sendPacket({
+    type: "RECEIVE_QUESTIONS",
+    message: JSON.stringify(playerData),
   });
 }
 

@@ -13,6 +13,41 @@
 #include <soh/util.h>
 #include <nlohmann/json.hpp>
 
+void QuestionManager::addQuestion(const Question& q) {
+    questions.push_back(q);
+}
+
+const Question* QuestionManager::getCurrentQuestion() const {
+    if (questions.empty())
+        return nullptr;
+    return &questions[currentIndex];
+}
+
+bool QuestionManager::nextQuestion() {
+    if (currentIndex + 1 < questions.size()) {
+        currentIndex++;
+        return true;
+    }
+    return false; // no more questions
+}
+
+bool QuestionManager::previousQuestion() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        return true;
+    }
+    return false; // already at the first question
+}
+
+void QuestionManager::reset() {
+    currentIndex = 0;
+}
+
+QuestionManager& QuestionManager::get() {
+    static QuestionManager instance; // created once
+    return instance;
+}
+
 extern "C" {
 #include <variables.h>
 #include "macros.h"
@@ -509,6 +544,7 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
     if (payload["type"] == "PUSH_SAVE_STATE" && GameInteractor::IsSaveLoaded()) {
         Anchor_ParseSaveStateFromRemote(payload);
     }
+
     if (payload["type"] == "REQUEST_SAVE_STATE" && GameInteractor::IsSaveLoaded()) {
         Anchor_PushSaveStateToRemote();
     }
@@ -632,6 +668,41 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
     if (payload["type"] == "RESET") {
         std::reinterpret_pointer_cast<LUS::ConsoleWindow>(LUS::Context::GetInstance()->GetWindow()->GetGui()->GetGuiWindow("Console"))->Dispatch("reset");
     }
+
+    if (payload["type"] == "RECEIVE_QUESTIONS") {
+        try {
+            // Parse the message field which contains the JSON string
+            std::string messageStr = payload["message"].get<std::string>();
+            json questionData = json::parse(messageStr);
+            
+            // Extract the questions array
+            if (questionData.contains("questionGame") && questionData["questionGame"].contains("questions")) {
+                auto questionsArray = questionData["questionGame"]["questions"];
+                
+                // Clear existing questions (optional - remove if you want to accumulate)
+                // QuestionManager::get().reset();
+                
+                // Add each question to the manager
+                for (const auto& q : questionsArray) {
+                    Question question;
+                    question.id = q["id"].get<int>();
+                    question.question = q["question"].get<std::string>();
+                    question.options = q["options"].get<std::vector<std::string>>();
+                    question.answerId = q["answerId"].get<int>();
+                    
+                    QuestionManager::get().addQuestion(question);
+                }
+                
+                SPDLOG_INFO("[Anchor] Loaded {} questions from server", questionsArray.size());
+                Anchor_DisplayMessage({
+                    .message = "Questions received from server!"
+                });
+            }
+        } catch (const std::exception& e) {
+            SPDLOG_ERROR("[Anchor] Error parsing questions: {}", e.what());
+        }
+    }
+
 }
 
 void Anchor_PushSaveStateToRemote() {

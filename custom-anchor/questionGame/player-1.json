@@ -1,0 +1,81 @@
+{
+  "questionGame": {
+    "questions": [
+      {
+        "id": 1,
+        "question": "What is the capital of France?",
+        "options": ["Berlin", "Madrid", "Paris", "Rome"],
+        "answerId": 2
+      },
+      {
+        "id": 2,
+        "question": "Which planet is known as the Red Planet?",
+        "options": ["Earth", "Mars", "Jupiter", "Saturn"],
+        "answerId": 1
+      },
+      {
+        "id": 3,
+        "question": "What is the smallest prime number?",
+        "options": ["0", "1", "2", "3"],
+        "answerId": 2
+      },
+      {
+        "id": 4,
+        "question": "Who painted the Mona Lisa?",
+        "options": [
+          "Vincent van Gogh",
+          "Pablo Picasso",
+          "Leonardo da Vinci",
+          "Michelangelo"
+        ],
+        "answerId": 2
+      },
+      {
+        "id": 5,
+        "question": "What is the largest mammal in the world?",
+        "options": ["African Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
+        "answerId": 1
+      },
+      {
+        "id": 6,
+        "question": "In which year did World War II end?",
+        "options": ["1943", "1944", "1945", "1946"],
+        "answerId": 2
+      },
+      {
+        "id": 7,
+        "question": "What is the chemical symbol for gold?",
+        "options": ["Go", "Gd", "Au", "Ag"],
+        "answerId": 2
+      },
+      {
+        "id": 8,
+        "question": "Which country is home to the kangaroo?",
+        "options": ["New Zealand", "Australia", "South Africa", "Brazil"],
+        "answerId": 1
+      },
+      {
+        "id": 9,
+        "question": "What is the speed of light in vacuum?",
+        "options": [
+          "299,792 km/s",
+          "150,000 km/s",
+          "500,000 km/s",
+          "1,000,000 km/s"
+        ],
+        "answerId": 0
+      },
+      {
+        "id": 10,
+        "question": "Who wrote 'Romeo and Juliet'?",
+        "options": [
+          "Charles Dickens",
+          "William Shakespeare",
+          "Jane Austen",
+          "Mark Twain"
+        ],
+        "answerId": 1
+      }
+    ]
+  }
+}

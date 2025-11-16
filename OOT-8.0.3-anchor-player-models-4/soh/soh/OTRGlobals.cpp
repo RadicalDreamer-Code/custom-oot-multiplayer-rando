@@ -343,6 +343,9 @@ OTRGlobals::OTRGlobals() {
     defaultFontLargest = CreateDefaultFontWithSize(20.0f);
     ScaleImGui();
 
+    //QUESTION
+    QuestionManager::get().addQuestion({ 1, "Capital of France?", { "Berlin", "Paris", "Rome" }, 1 });
+
     // Move the camera strings from read only memory onto the heap (writable memory)
     // This is in OTRGlobals right now because this is a place that will only ever be run once at the beginning of startup.
     // We should probably find some code in db_camera that does initialization and only run once, and then dealloc on deinitialization.
@@ -2525,23 +2528,31 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
                 messageEntry = CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);
             }
         } else if (textId == TEXT_CUSTOM_QUIZ_QUESTION) {
-            printf("I get here!");
+
             std::string question = "Was ist die Antwort auf diese Quizfrage?";
             std::string option1 = "Ja";
             std::string option2 = "Nein";
             std::string option3 = "Weiß ich nicht";
-            std::string message = "\x1A\x08"
-                             + question +
-                             "\x09&"
-                             "\x1C%g"
-                             + option1 +
-                             "&"
-                             + option2 +
-                             "&"
-                             + option3 +
-                             "%w\x02";
+
+            auto q = QuestionManager::get().getCurrentQuestion()->question;
+            if (!question.empty()) {
+                printf("I get here!");
+                //TODO: Options aus der Network Question auslesen und irgendwie definieren, was die korrekte Antwort ist. Z.B. kann die erste Antwort immer die korrekte sein, wird aber in der Anzeige geshuffelt oder so?
+                question = q;
+            } else {
+                printf("I get here!");
+                question = "No Network Question received";
+            }
+
+            std::string message = "\x1A\x08" + question +
+                                  "\x09&"
+                                  "\x1C%g" +
+                                  option1 + "&" + option2 + "&" + option3 + "%w\x02";
             messageEntry = CustomMessage(message, message, message);
             messageEntry.Format();
+
+            QuestionManager::get().nextQuestion();
+
             //messageEntry =
             //    CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);
         } else if (textId == TEXT_SHEIK_NEED_HOOK || textId == TEXT_SHEIK_HAVE_HOOK) {
