@@ -72,6 +72,32 @@ class AnchorLogWindow : public LUS::GuiWindow {
     void UpdateElement() override;
 };
 
+
+class Question {
+  public:
+    int id;
+    std::string question;
+    std::vector<std::string> options;
+    int answerId;
+};
+
+class QuestionManager {
+  public:
+    static QuestionManager& get(); // global access
+
+    void addQuestion(const Question& q);
+    const Question* getCurrentQuestion() const;
+    bool nextQuestion();
+    bool previousQuestion();
+    void reset();
+
+  private:
+    QuestionManager() = default; // private constructor
+    std::vector<Question> questions;
+    size_t currentIndex = 0;
+};
+
+
 #endif
 #endif
 

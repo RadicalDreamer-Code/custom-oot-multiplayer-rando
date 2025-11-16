@@ -343,6 +343,9 @@ OTRGlobals::OTRGlobals() {
     defaultFontLargest = CreateDefaultFontWithSize(20.0f);
     ScaleImGui();
 
+    //QUESTION
+    QuestionManager::get().addQuestion({ 1, "Capital of France?", { "Berlin", "Paris", "Rome" }, 1 });
+
     // Move the camera strings from read only memory onto the heap (writable memory)
     // This is in OTRGlobals right now because this is a place that will only ever be run once at the beginning of startup.
     // We should probably find some code in db_camera that does initialization and only run once, and then dealloc on deinitialization.
@@ -2525,9 +2528,19 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
                 messageEntry = CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);
             }
         } else if (textId == TEXT_CUSTOM_QUIZ_QUESTION) {
-            printf("I get here!");
-            messageEntry = CustomMessage{ "Test", "Test", "Test" };
-            messageEntry.Format();
+            
+            auto q = QuestionManager::get().getCurrentQuestion()->question;
+            if (!q.empty()) {
+                printf("I get here!");
+                messageEntry = CustomMessage{ q , "Test", "Test" };
+                messageEntry.Format();
+            } else {
+                printf("I get here!");
+                messageEntry = CustomMessage{ "No Network Question received", "Test", "Test" };
+                messageEntry.Format();
+            }
+            QuestionManager::get().nextQuestion();
+
             //messageEntry =
             //    CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);
         } else if (textId == TEXT_SHEIK_NEED_HOOK || textId == TEXT_SHEIK_HAVE_HOOK) {
