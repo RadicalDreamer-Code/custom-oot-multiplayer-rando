@@ -182,6 +182,7 @@ source_group("soh\\Enhancements\\randomizer\\3drando\\hint_list" REGULAR_EXPRESS
 source_group("soh\\Enhancements\\randomizer\\3drando\\location_access" REGULAR_EXPRESSION "soh/Enhancements/randomizer/3drando/location_access/*")
 source_group("soh\\Enhancements\\speechsynthesizer" REGULAR_EXPRESSION "soh/Enhancements/speechsynthesizer/*")
 source_group("soh\\Enhancements\\tts" REGULAR_EXPRESSION "soh/Enhancements/tts/*")
+source_group("soh\\Enhancements\\punishments" REGULAR_EXPRESSION "soh/Enhancements/punishments/*")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_source_files_properties(soh/Enhancements/tts/tts.cpp PROPERTIES COMPILE_FLAGS "/utf-8")

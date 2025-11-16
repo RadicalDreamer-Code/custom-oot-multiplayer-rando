@@ -12,6 +12,7 @@
 #include <soh/Enhancements/randomizer/randomizer_check_tracker.h>
 #include <soh/util.h>
 #include <nlohmann/json.hpp>
+#include <soh/Enhancements/punishments/PunishmentManager.h>
 
 // TODO: Bananen-Code - Die Funktion sollte man glaube ich anders aufbauen
 void QuestionManager::OnQuestionAnswered(uint8_t option) {
@@ -20,6 +21,7 @@ void QuestionManager::OnQuestionAnswered(uint8_t option) {
         Audio_PlaySoundGeneral(NA_SE_EV_SMALL_DOG_BARK, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
     } else {
         Audio_PlaySoundGeneral(NA_SE_EN_GANON_LAUGH, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        PunishmentManager::ExecuteRandomPunishment();
     }
 
     // TODO: Let QuestionManager send response to server in order to punish all players
