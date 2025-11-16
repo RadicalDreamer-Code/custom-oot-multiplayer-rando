@@ -2526,7 +2526,21 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
             }
         } else if (textId == TEXT_CUSTOM_QUIZ_QUESTION) {
             printf("I get here!");
-            messageEntry = CustomMessage{ "Test", "Test", "Test" };
+            std::string question = "Was ist die Antwort auf diese Quizfrage?";
+            std::string option1 = "Ja";
+            std::string option2 = "Nein";
+            std::string option3 = "Weiß ich nicht";
+            std::string message = "\x1A\x08"
+                             + question +
+                             "\x09&"
+                             "\x1C%g"
+                             + option1 +
+                             "&"
+                             + option2 +
+                             "&"
+                             + option3 +
+                             "%w\x02";
+            messageEntry = CustomMessage(message, message, message);
             messageEntry.Format();
             //messageEntry =
             //    CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);

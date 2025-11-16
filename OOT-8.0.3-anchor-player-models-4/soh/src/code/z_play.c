@@ -810,6 +810,23 @@ void Play_Update(PlayState* play) {
     gSegments[5] = VIRTUAL_TO_PHYSICAL(play->objectCtx.status[play->objectCtx.subKeepIndex].segment);
     gSegments[2] = VIRTUAL_TO_PHYSICAL(play->sceneSegment);
 
+
+    // Callbacks für Auswahldialog, wenn er mit Z getriggert wurde. Nur für Testzwecke und kann hier später weg
+
+    if (play->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(play)) {
+        u8 option = play->msgCtx.choiceIndex;
+
+        if (option == 0) {
+            printf("OPTION 1");
+        } else if (option == 1) {
+            printf("OPTION 2");
+        } else if (option == 2) {
+            printf("OPTION 3");
+        } 
+        Player* player = GET_PLAYER(play);
+        player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
+    }
+
     if (FrameAdvance_Update(&play->frameAdvCtx, &input[1])) {
         if ((play->transitionMode == TRANS_MODE_OFF) && (play->transitionTrigger != TRANS_TRIGGER_OFF)) {
             play->transitionMode = TRANS_MODE_SETUP;
@@ -822,7 +839,12 @@ void Play_Update(PlayState* play) {
             //GiveItemEntryWithoutActor(gPlayState, getItemEntry);
             //Player_InBlockingCsMode(play, GET_PLAYER(play));
 
-            Message_StartTextbox(play, 0x90FD, NULL);
+
+            // Quizdialog mit Z aufrufen. Falls nicht auskommentiert, dürfen auch die Callbacks oben nicht auskommentiert werden, sonst bleibt der Input geblockt
+
+            Player* player = GET_PLAYER(play);
+            player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
+            Message_StartTextbox(play, 0x90FD, &player->actor);
         }
 
 
