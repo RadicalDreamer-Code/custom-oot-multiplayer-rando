@@ -39,6 +39,7 @@ s16 firstInit = 0;
 
 s16 gEnPartnerId;
 s16 gEnLinkPuppetId;
+u8 quizWasTriggeredWithZ = 0;
 
 void OTRPlay_SpawnScene(PlayState* play, s32 sceneNum, s32 spawn);
 
@@ -815,7 +816,7 @@ void Play_Update(PlayState* play) {
 
     // Callbacks für Auswahldialog, wenn er mit Z getriggert wurde. Nur für Testzwecke und kann hier später weg
 
-    if (play->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(play)) {
+    if (quizWasTriggeredWithZ && play->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(play)) {
         u8 option = play->msgCtx.choiceIndex;
 
         if (option == 0) {
@@ -828,6 +829,7 @@ void Play_Update(PlayState* play) {
         Player* player = GET_PLAYER(play);
         player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
         Message_Answered(option);
+        quizWasTriggeredWithZ = 0;
     }
 
     if (FrameAdvance_Update(&play->frameAdvCtx, &input[1])) {
@@ -836,7 +838,7 @@ void Play_Update(PlayState* play) {
         }
 
         //TEST-TEST-TEST:
-        if (CHECK_BTN_ALL(input[0].press.button, BTN_Z)) {
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_Z) && !quizWasTriggeredWithZ) {
             //Play_TriggerRespawn(play);
             //GetItemEntry getItemEntry = ItemTable_Retrieve(GI_ICE_TRAP);
             //GiveItemEntryWithoutActor(gPlayState, getItemEntry);
@@ -848,6 +850,7 @@ void Play_Update(PlayState* play) {
             Player* player = GET_PLAYER(play);
             player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
             Message_StartTextbox(play, 0x90FD, &player->actor);
+            quizWasTriggeredWithZ = 1;
         }
 
 

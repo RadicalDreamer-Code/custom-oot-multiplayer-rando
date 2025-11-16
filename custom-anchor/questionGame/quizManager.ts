@@ -62,6 +62,18 @@ export class QuizManager {
             sourceFile: playerId,
             originalId: question.id,
           };
+
+          // Shuffle options and update answerId accordingly
+          const correctOption = uniqueQuestion.options[uniqueQuestion.answerId];
+          const shuffledOptions = this.shuffle(uniqueQuestion.options);
+          uniqueQuestion.options = shuffledOptions;
+          for (let i = 0; i < shuffledOptions.length; i++) {
+            if (correctOption == shuffledOptions[i]) {
+              uniqueQuestion.answerId = i;
+              break;
+            }
+          }
+
           this.questionPool.push(uniqueQuestion);
         }
       }

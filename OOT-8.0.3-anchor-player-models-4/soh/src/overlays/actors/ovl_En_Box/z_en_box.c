@@ -663,6 +663,7 @@ void EnBox_Update(Actor* thisx, PlayState* play) {
         Player* player = GET_PLAYER(play);
         player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
         quizWasTriggered = 0;
+        Message_Answered(option);
     }
 }
 
