@@ -17,7 +17,7 @@ static const std::vector<ActorID> ENEMY_LIST = {
     ACTOR_EN_ST, // Skulltula
     ACTOR_EN_FIREFLY, // Feuer Fledermaus
     ACTOR_EN_MB, // Moblin mit Keule
-    ACTOR_EN_GOMA, // Mini Goma
+    //ACTOR_EN_GOMA, // Mini Goma, crasht wenn getötet wird
     //ACTOR_EN_ICE_HONO, // Nur blaues Feuer
     ACTOR_EN_FD, // Feuertänzer Miniboss
     //ACTOR_EN_FD_FIRE, // Spiel stürzt ab
