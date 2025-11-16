@@ -13,6 +13,20 @@
 #include <soh/util.h>
 #include <nlohmann/json.hpp>
 
+// TODO: Bananen-Code - Die Funktion sollte man glaube ich anders aufbauen
+void QuestionManager::OnQuestionAnswered(uint8_t option) {
+    auto answerId = QuestionManager::get().getCurrentQuestion()->answerId;
+    if (answerId == option) {
+        Audio_PlaySoundGeneral(NA_SE_EV_SMALL_DOG_BARK, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+    } else {
+        Audio_PlaySoundGeneral(NA_SE_EN_GANON_LAUGH, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+    }
+
+    // TODO: Let QuestionManager send response to server in order to punish all players
+
+    QuestionManager::get().nextQuestion();
+}
+
 void QuestionManager::addQuestion(const Question& q) {
     questions.push_back(q);
 }

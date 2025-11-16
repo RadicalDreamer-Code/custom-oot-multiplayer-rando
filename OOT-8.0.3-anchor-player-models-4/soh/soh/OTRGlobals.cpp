@@ -2529,29 +2529,29 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
             }
         } else if (textId == TEXT_CUSTOM_QUIZ_QUESTION) {
 
-            std::string question = "Was ist die Antwort auf diese Quizfrage?";
-            std::string option1 = "Ja";
-            std::string option2 = "Nein";
-            std::string option3 = "Weiß ich nicht";
+            //std::string question = "Was ist die Antwort auf diese Quizfrage?";
+            //std::string option1 = "Ja";
+            //std::string option2 = "Nein";
+            //std::string option3 = "Weiß ich nicht";
 
-            auto q = QuestionManager::get().getCurrentQuestion()->question;
-            if (!question.empty()) {
-                printf("I get here!");
-                //TODO: Options aus der Network Question auslesen und irgendwie definieren, was die korrekte Antwort ist. Z.B. kann die erste Antwort immer die korrekte sein, wird aber in der Anzeige geshuffelt oder so?
-                question = q;
+            const Question* questionData = QuestionManager::get().getCurrentQuestion();
+            
+            if (questionData->options.size() > 0) {
+                std::string question = questionData->question;
+                std::string option1 = questionData->options[0];
+                std::string option2 = questionData->options[1];
+                std::string option3 = questionData->options[2];
+
+                std::string message = "\x1A\x08" + question +
+                                      "\x09&"
+                                      "\x1C%g" +
+                                      option1 + "&" + option2 + "&" + option3 + "%w\x02";
+                messageEntry = CustomMessage(message, message, message);
+                messageEntry.Format();
             } else {
-                printf("I get here!");
-                question = "No Network Question received";
+                messageEntry = CustomMessage("Error", "Error", "Error");
+                messageEntry.Format();
             }
-
-            std::string message = "\x1A\x08" + question +
-                                  "\x09&"
-                                  "\x1C%g" +
-                                  option1 + "&" + option2 + "&" + option3 + "%w\x02";
-            messageEntry = CustomMessage(message, message, message);
-            messageEntry.Format();
-
-            QuestionManager::get().nextQuestion();
 
             //messageEntry =
             //    CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, TEXT_GANONDORF);

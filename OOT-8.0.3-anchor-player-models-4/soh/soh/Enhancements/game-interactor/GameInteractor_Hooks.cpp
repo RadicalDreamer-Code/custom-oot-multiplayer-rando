@@ -1,4 +1,5 @@
 #include "GameInteractor_Hooks.h"
+#include "GameInteractor_Anchor.h"
 
 // MARK: - Gameplay
 
@@ -88,6 +89,10 @@ void GameInteractor_ExecuteOnPlayDestroy() {
 
 void GameInteractor_ExecuteOnPlayDrawEnd() {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayDrawEnd>();
+}
+
+void GameInteractor_ExecuteOnAnswered(uint8_t option) {
+    QuestionManager::get().OnQuestionAnswered(option);
 }
 
 // MARK: -  Save Files

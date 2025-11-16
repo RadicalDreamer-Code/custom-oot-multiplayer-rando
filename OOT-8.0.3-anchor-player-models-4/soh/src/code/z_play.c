@@ -7,6 +7,8 @@
 #include "soh/frame_interpolation.h"
 #include "soh/Enhancements/debugconsole.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Anchor.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/Enhancements/randomizer/randomizer_entrance.h"
 #include <overlays/actors/ovl_En_Niw/z_en_niw.h>
 #include <overlays/misc/ovl_kaleido_scope/z_kaleido_scope.h>
@@ -825,6 +827,7 @@ void Play_Update(PlayState* play) {
         } 
         Player* player = GET_PLAYER(play);
         player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
+        Message_Answered(option);
     }
 
     if (FrameAdvance_Update(&play->frameAdvCtx, &input[1])) {

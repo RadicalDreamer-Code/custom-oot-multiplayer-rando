@@ -85,6 +85,7 @@ class QuestionManager {
   public:
     static QuestionManager& get(); // global access
 
+    void OnQuestionAnswered(uint8_t option);
     void addQuestion(const Question& q);
     const Question* getCurrentQuestion() const;
     bool nextQuestion();

@@ -2431,6 +2431,7 @@ u8 Message_GetState(MessageContext* msgCtx);
 void Message_Draw(PlayState* play);
 void Message_Update(PlayState* play);
 void Message_SetTables(void);
+void Message_Answered(uint8_t option);
 f32 Message_GetCharacterWidth(unsigned char characterIndex);
 void GameOver_Init(PlayState* play);
 void GameOver_FadeInLights(PlayState* play);
