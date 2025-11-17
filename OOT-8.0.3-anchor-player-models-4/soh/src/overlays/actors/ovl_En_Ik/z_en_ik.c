@@ -205,7 +205,8 @@ void func_80A74398(Actor* thisx, PlayState* play) {
     this->unk_2FC = 0;
     thisx->colChkInfo.health = 30;
     thisx->gravity = -1.0f;
-    this->switchFlags = (thisx->params >> 8) & 0xFF;
+    // Edit: if not custom param 8
+    if (thisx->params != 8) this->switchFlags = (thisx->params >> 8) & 0xFF;
     thisx->params &= 0xFF;
 
     if (thisx->params == 0) {
@@ -233,9 +234,21 @@ void func_80A74398(Actor* thisx, PlayState* play) {
     Effect_Add(play, &this->blureIdx, EFFECT_BLURE1, 0, 0, &blureInit);
     func_80A74714(this);
 
+    // Edit: For custom param 8 Iron Knuckle attacks immidiately
+    if (thisx->params == 8) {
+        f32 frames = Animation_GetLastFrame(&object_ik_Anim_00DD50);
+
+        this->actor.flags |= ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_HOSTILE;
+        this->unk_2F8 = 4;
+        this->actor.speedXZ = 0.0f;
+        Animation_Change(&this->skelAnime, &object_ik_Anim_00DD50, 0.0f, 0.0f, frames, ANIMMODE_LOOP, 4.0f);
+        EnIk_SetupAction(this, func_80A7492C);
+    }
+
     uint8_t enemyRandoCCActive = CVarGetInteger("gRandomizedEnemies", 0) || CVarGetInteger("gCrowdControl", 0);
 
-    if (this->switchFlags != 0xFF) {
+    // Edit: If not custom param 8
+    if (thisx->params != 8 && this->switchFlags != 0xFF) {
         // In vanilla gameplay, Iron Knuckles are despawned based on specific flags in specific scenarios.
         // In Enemy Randomizer and Crowd Control, this made the Iron Knuckles despawn when the same flag was set by other objects.
         // Instead, rely on the "Clear enemy room" flag when in Enemy Randomizer for Iron Knuckles that aren't Nabooru.
@@ -663,7 +676,9 @@ void func_80A75A38(EnIk* this, PlayState* play) {
                 Item_DropCollectibleRandom(play, &this->actor, &this->actor.world.pos, 0xB0);
                 // Don't set flag when Enemy Rando or CrowdControl are on.
                 // Instead Iron Knuckles rely on the "clear room" flag.
-                if (this->switchFlags != 0xFF && !CVarGetInteger("gRandomizedEnemies", 0) && !CVarGetInteger("gCrowdControl", 0)) {
+                // Edit: Also for custom param 8
+                if (this->actor.params != 8 && this->switchFlags != 0xFF && !CVarGetInteger("gRandomizedEnemies", 0) &&
+                    !CVarGetInteger("gCrowdControl", 0)) {
                     Flags_SetSwitch(play, this->switchFlags);
                 }
                 Actor_Kill(&this->actor);
@@ -721,7 +736,8 @@ void func_80A75C38(EnIk* this, PlayState* play) {
     } else if (this->actor.colChkInfo.health <= 10) {
         Actor_ChangeCategory(play, &play->actorCtx, &this->actor, ACTORCAT_BOSS);
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->actor.world.pos, 20, NA_SE_EN_LAST_DAMAGE);
-        if (this->switchFlags != 0xFF) {
+        // Edit: If not custom param 8
+        if (this->actor.params != 8 && this->switchFlags != 0xFF) {
             Flags_SetSwitch(play, this->switchFlags);
         }
         return;

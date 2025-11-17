@@ -222,7 +222,9 @@ void EnWf_Init(Actor* thisx, PlayState* play) {
     thisx->colChkInfo.health = 8;
     thisx->colChkInfo.cylRadius = 50;
     thisx->colChkInfo.cylHeight = 100;
-    this->switchFlag = (thisx->params >> 8) & 0xFF;
+    // Edit: Don't set switch flag im custom param 8 or 9
+    if (thisx->params != 8 && thisx->params != 9)
+        this->switchFlag = (thisx->params >> 8) & 0xFF;
     thisx->params &= 0xFF;
     this->eyeIndex = 0;
     this->unk_2F4 = 10.0f; // Set and not used
@@ -234,7 +236,8 @@ void EnWf_Init(Actor* thisx, PlayState* play) {
     Collider_InitCylinder(play, &this->colliderCylinderTail);
     Collider_SetCylinder(play, &this->colliderCylinderTail, thisx, &sTailCylinderInit);
 
-    if (thisx->params == WOLFOS_NORMAL) {
+    // Edit: Custom param 8 is wolfos normal
+    if (thisx->params == WOLFOS_NORMAL || thisx->params == 8) {
         SkelAnime_InitFlex(play, &this->skelAnime, &gWolfosNormalSkel, &gWolfosWaitingAnim, this->jointTable,
                            this->morphTable, WOLFOS_LIMB_MAX);
         Actor_SetScale(thisx, 0.0075f);
@@ -250,7 +253,9 @@ void EnWf_Init(Actor* thisx, PlayState* play) {
 
     EnWf_SetupWaitToAppear(this);
 
-    if ((this->switchFlag != 0xFF) && Flags_GetSwitch(play, this->switchFlag)) {
+    // Edit: If not custom param 8 or 9
+    if (thisx->params != 8 && thisx->params != 9 && (this->switchFlag != 0xFF) &&
+        Flags_GetSwitch(play, this->switchFlag)) {
         Actor_Kill(thisx);
     }
 }
@@ -262,7 +267,8 @@ void EnWf_Destroy(Actor* thisx, PlayState* play) {
     Collider_DestroyCylinder(play, &this->colliderCylinderBody);
     Collider_DestroyCylinder(play, &this->colliderCylinderTail);
 
-    if ((this->actor.params != WOLFOS_NORMAL) && (this->switchFlag != 0xFF)) {
+    // Edit: Ant not custom param 8 or 9
+    if (thisx->params != 8 && thisx->params != 9 && this->actor.params != WOLFOS_NORMAL && (this->switchFlag != 0xFF)) {
         func_800F5B58();
     }
 
@@ -390,7 +396,9 @@ void EnWf_WaitToAppear(EnWf* this, PlayState* play) {
 
             // Disable miniboss music with Enemy Randomizer because the music would keep
             // playing if the enemy was never defeated, which is common with Enemy Randomizer.
-            if ((this->actor.params != WOLFOS_NORMAL) && (this->switchFlag != 0xFF) && !CVarGetInteger("gRandomizedEnemies", 0)) {
+            // Edit: And not custom param 8 or 9
+            if ((this->actor.params != WOLFOS_NORMAL) && (this->switchFlag != 0xFF) &&
+                !CVarGetInteger("gRandomizedEnemies", 0) && this->actor.params != 8 && this->actor.params != 9) {
                 func_800F5ACC(NA_BGM_MINI_BOSS);
             }
         }
@@ -1214,7 +1222,8 @@ void EnWf_Die(EnWf* this, PlayState* play) {
     if (SkelAnime_Update(&this->skelAnime)) {
         Item_DropCollectibleRandom(play, &this->actor, &this->actor.world.pos, 0xD0);
 
-        if (this->switchFlag != 0xFF) {
+        // Edit: If not custom param 8 or 9
+        if (this->actor.params != 8 && this->actor.params != 9 && this->switchFlag != 0xFF) {
             Flags_SetSwitch(play, this->switchFlag);
         }
 
@@ -1442,8 +1451,8 @@ void EnWf_Draw(Actor* thisx, PlayState* play) {
     // WOLFOS_ACTION_WAIT_TO_APPEAR.
     if ((this->action != WOLFOS_ACTION_WAIT_TO_APPEAR) || !this->unk_300) {
         Gfx_SetupDL_25Opa(play->state.gfxCtx);
-
-        if (this->actor.params == WOLFOS_NORMAL) {
+        // Edit: Or custom param 8
+        if (this->actor.params == WOLFOS_NORMAL || this->actor.params == 8) {
             gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sWolfosNormalEyeTextures[this->eyeIndex]));
         } else {
             gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sWolfosWhiteEyeTextures[this->eyeIndex]));

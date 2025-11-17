@@ -12,40 +12,50 @@
 
 u32 enemyIndex;
 
-static const std::vector<ActorID> ENEMY_LIST = {
-    ACTOR_EN_DODONGO, // Dogongo
-    ACTOR_EN_ST, // Skulltula
-    ACTOR_EN_FIREFLY, // Feuer Fledermaus
-    ACTOR_EN_MB, // Moblin mit Keule
-    //ACTOR_EN_GOMA, // Mini Goma, crasht wenn getötet wird
-    //ACTOR_EN_ICE_HONO, // Nur blaues Feuer
-    ACTOR_EN_FD, // Feuertänzer Miniboss
-    //ACTOR_EN_FD_FIRE, // Spiel stürzt ab
-    //ACTOR_EN_SW, // Spiel stürzt ab oder läft nicht
-    //ACTOR_EN_BB, // Spiel stürzt ab oder läft nicht
-    ACTOR_EN_RR, // Rotes Springspinnen Ding vom Todeskrater Pfad
-    ACTOR_EN_TITE, // Raumschleim
-    ACTOR_EN_PEEHAT, // Ananas Vieh
-    ACTOR_EN_WF, // Wolf
-    //ACTOR_EN_KO, // Lädt nicht
-    ACTOR_EN_IK // Iron Knuckle
-    //ACTOR_EN_DS // Kein Gegner
+typedef struct {
+    ActorID actorId;
+    s16 params;
+} EnemySpawnInfo;
+
+static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
+    { ACTOR_EN_ZF, -1 },         // Lizalfos
+    { ACTOR_EN_ZF, -2 },         // Dinolfos
+    { ACTOR_EN_FLOORMAS, 0 },    // Floormaster
+    { ACTOR_EN_TP, -1 },         // Elektrowurmvieh
+    { ACTOR_EN_SKB, 8 },         // Stalchild
+    { ACTOR_EN_GOMA, 6 },        // Mini Goma
+    { ACTOR_EN_TEST, 3 },        // Stalfos
+    { ACTOR_EN_RD, 0 },          // Redead
+    { ACTOR_EN_RD, 0x00FE },     // Gibdo
+    { ACTOR_EN_DODONGO, 0 },     // Dogongo
+    { ACTOR_EN_ST, 0 },          // Skulltula
+    { ACTOR_EN_FIREFLY, 0 },     // Feuer Fledermaus
+    { ACTOR_EN_FIREFLY, 4 },     // Eis Fledermaus
+    { ACTOR_EN_FIREFLY, 2 },     // Fledermaus
+    { ACTOR_EN_MB, 0 },          // Moblin mit Keule
+    { ACTOR_EN_FD, 0 },          // Feuertänzer Miniboss
+    { ACTOR_EN_RR, 0 },          // Raubschleim
+    { ACTOR_EN_TITE, 0 },        // Roter Arachno
+    { ACTOR_EN_TITE, -2 },       // Blauer Arachno 
+    { ACTOR_EN_PEEHAT, 8 },      // Ananas Vieh
+    { ACTOR_EN_WF, 8 },          // Wolfos 
+    { ACTOR_EN_WF, 9 },          // White Wolfos 
+    { ACTOR_EN_IK, 8 }           // Iron Knuckle
 };
+
+void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params) {
+    Player* player = GET_PLAYER(gPlayState);
+    player->invincibilityTimer = 60;
+    Actor_Spawn(&gPlayState->actorCtx, gPlayState, actorId, player->actor.world.pos.x, player->actor.world.pos.y,
+                player->actor.world.pos.z, 0, 0, 0, params, 0);
+}
 
 void PunishmentManager::SpawnRandomEnemy() {
     enemyIndex = rand() % ENEMY_LIST.size();
-    ActorID actor = ENEMY_LIST[enemyIndex];
+    ActorID actor = ENEMY_LIST[enemyIndex].actorId;
+    s16 params = ENEMY_LIST[enemyIndex].params;
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
-    
-    Player* player = GET_PLAYER(gPlayState);
-    player->invincibilityTimer = 60;
-
-    Actor_Spawn(&gPlayState->actorCtx,
-                gPlayState,     
-                actor,
-                player->actor.world.pos.x, player->actor.world.pos.y, player->actor.world.pos.z,
-                0, 0, 0, 0, 0
-    );
+    SpawnEnemy(actor, params);
 }
 
 void PunishmentManager::ExecuteRandomPunishment() {

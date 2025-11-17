@@ -218,6 +218,10 @@ void EnPeehat_Init(Actor* thisx, PlayState* play) {
     this->actor.uncullZoneScale = 800.0f;
     this->actor.uncullZoneDownward = 1800.0f;
     switch (this->actor.params) {
+        // Edit: Case custom param 8
+        case 8:
+            EnPeehat_Ground_SetStateGround(this);
+            break;
         case PEAHAT_TYPE_GROUNDED:
             EnPeehat_Ground_SetStateGround(this);
             break;
@@ -251,7 +255,8 @@ void EnPeehat_Destroy(Actor* thisx, PlayState* play) {
     Collider_DestroyJntSph(play, &this->colJntSph);
 
     // If PEAHAT_TYPE_LARVA, decrement total larva spawned
-    if (this->actor.params > 0) {
+    // Edit: And not custom param 8
+    if (this->actor.params > 0 && this->actor.params != 8) {
         parent = (EnPeehat*)this->actor.parent;
         if (parent != NULL && parent->actor.update != NULL) {
             parent->unk_2FA--;
@@ -328,7 +333,8 @@ void EnPeehat_Ground_SetStateGround(EnPeehat* this) {
 void EnPeehat_Ground_StateGround(EnPeehat* this, PlayState* play) {
     // Keep the peahat as the version that doesn't spawn extra enemies and can actually be killed
     // when Enemy Randomizer is on.
-    if (IS_DAY || CVarGetInteger("gRandomizedEnemies", 0)) {
+    // Edit: Or if custom params 8
+    if (IS_DAY || CVarGetInteger("gRandomizedEnemies", 0) || this->actor.params == 8) {
         this->actor.flags |= ACTOR_FLAG_TARGETABLE;
         if (this->riseDelayTimer == 0) {
             if (this->actor.xzDistToPlayer < this->xzDistToRise) {
@@ -753,7 +759,8 @@ void EnPeehat_StateAttackRecoil(EnPeehat* this, PlayState* play) {
     this->actor.speedXZ += 0.5f;
     if (this->actor.speedXZ == 0.0f) {
         // Is PEAHAT_TYPE_LARVA
-        if (this->actor.params > 0) {
+        // Edit: And not custom param 8
+        if (this->actor.params > 0 && this->actor.params != 8) {
             Vec3f zeroVec = { 0, 0, 0 };
             s32 i;
             for (i = 4; i >= 0; i--) {
@@ -769,7 +776,8 @@ void EnPeehat_StateAttackRecoil(EnPeehat* this, PlayState* play) {
         } else {
             EnPeehat_Ground_SetStateSeekPlayer(this);
             // Is PEAHAT_TYPE_GROUNDED
-            if (this->actor.params < 0) {
+            // Edit: Or custom param 8
+            if (this->actor.params < 0 || this->actor.params == 8) {
                 this->unk_2FA = (this->unk_2FA != 0) ? 0 : 1;
             }
         }
@@ -847,7 +855,8 @@ void EnPeehat_Adult_StateDie(EnPeehat* this, PlayState* play) {
             if (this->actor.colChkInfo.health == 0) {
                 EnPeehat_SetStateExplode(this);
                 // if PEAHAT_TYPE_GROUNDED
-            } else if (this->actor.params < 0) {
+                // Edit: Or custom param 8
+            } else if (this->actor.params < 0 || this->actor.params == 8) {
                 EnPeehat_Ground_SetStateHover(this);
                 this->riseDelayTimer = 60;
             } else {
@@ -934,7 +943,8 @@ void EnPeehat_Update(Actor* thisx, PlayState* play) {
     Player* player = GET_PLAYER(play);
 
     // If Adult Peahat
-    if (thisx->params <= 0) {
+    // Edit: Or custom params 8
+    if (thisx->params <= 0 || thisx->params == 8) {
         EnPeehat_Adult_CollisionCheck(this, play);
     }
     if (thisx->colChkInfo.damageEffect != PEAHAT_DMG_EFF_LIGHT_ICE_ARROW) {
@@ -950,7 +960,8 @@ void EnPeehat_Update(Actor* thisx, PlayState* play) {
         this->jiggleRot += this->jiggleRotInc;
     }
     // if PEAHAT_TYPE_GROUNDED
-    if (thisx->params < 0) {
+    // Edit: Or custom params 8
+    if (thisx->params < 0 || thisx->params == 8) {
         // Set the Z-Target point on the Peahat's weak point
         thisx->focus.pos.x = this->colJntSph.elements[0].dim.worldSphere.center.x;
         thisx->focus.pos.y = this->colJntSph.elements[0].dim.worldSphere.center.y;
@@ -966,7 +977,8 @@ void EnPeehat_Update(Actor* thisx, PlayState* play) {
     Collider_UpdateCylinder(thisx, &this->colCylinder);
     if (thisx->colChkInfo.health > 0) {
         // If Adult Peahat
-        if (thisx->params <= 0) {
+        // Edit: Or custom params 8
+        if (thisx->params <= 0 || thisx->params == 8) {
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->colCylinder.base);
             CollisionCheck_SetOC(play, &play->colChkCtx, &this->colJntSph.base);
             if (thisx->colorFilterTimer == 0 || !(thisx->colorFilterParams & 0x4000)) {
@@ -989,7 +1001,8 @@ void EnPeehat_Update(Actor* thisx, PlayState* play) {
             CollisionCheck_SetAC(play, &play->colChkCtx, &this->colQuad.base);
         }
         // if PEAHAT_TYPE_GROUNDED
-        if (thisx->params < 0 && (thisx->flags & ACTOR_FLAG_ACTIVE)) {
+        // Edit: Or custom params 8
+        if ((thisx->params < 0 || thisx->params == 8) && (thisx->flags & ACTOR_FLAG_ACTIVE)) {
             for (i = 1; i >= 0; i--) {
                 Vec3f posResult;
                 CollisionPoly* poly = NULL;
@@ -1052,7 +1065,8 @@ void EnPeehat_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* r
         return;
     }
     // is Adult Peahat
-    if (limbIndex == 3 && this->actor.params <= 0) {
+    // Edit: Or custom param 8
+    if (limbIndex == 3 && (this->actor.params <= 0 || this->actor.params == 8)) {
         damageYRot = 0.0f;
         OPEN_DISPS(play->state.gfxCtx);
         Matrix_Push();
