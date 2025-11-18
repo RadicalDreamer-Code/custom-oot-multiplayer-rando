@@ -10,20 +10,22 @@
 #include <soh/Enhancements/randomizer/randomizer_check_tracker.h>
 #include <soh/util.h>
 
-u32 enemyIndex = 24;
+u32 enemyIndex = 0;
 
 struct EnemySpawnInfo {
     ActorID actorId;
-    s16 params = 0;
-    int count = 1;
-    int spawnDistanceToLink = 70;
+    s16 params = 0; // Wird oft benötigt, um den Gegner korrekt zu spawnen oder manchmal für verschiedene Gegner Varianten. Im jeweiligen Header des Actors findet man da oft Infos zu, sonst im .c Skript des Actors nach actor.params suchen.
+    int count = 1; // Wie oft der Gegner gespawnt werden soll
+    int spawnDistanceToLink = 70; // Abstand zu Link beim Spawn
 };
 
 static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
+    { ACTOR_EN_DH, 0},           // Großer Hirnsauger
+    { ACTOR_EN_EIYER, 10, 3 },   // Rochenviecher aus Jabu-Jabu
     { ACTOR_EN_BUBBLE, 0 , 5 },  // Blasengegner aus Jabu-Jabu
     { ACTOR_EN_ZF, -1 , 2 },     // Lizalfos
     { ACTOR_EN_ZF, -2 , 2 },     // Dinolfos
-    { ACTOR_EN_FLOORMAS, 0 }, // Floormaster
+    { ACTOR_EN_FLOORMAS, 0 },    // Floormaster
     { ACTOR_EN_WALLMAS, 0 },     // Wallmaster
     { ACTOR_EN_TP, -1, 3 },      // Elektrowurmvieh
     { ACTOR_EN_SKB, 8, 3 },      // Stalchild
@@ -50,7 +52,7 @@ static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
 
 void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, float spawnDistanceToLink) {
     Player* player = GET_PLAYER(gPlayState);
-        player->invincibilityTimer = 60; 
+        player->invincibilityTimer = 60; // Invincibility, damit man nicht instant nach dem Spawn gedamaged wird
     for (int i = 0; i < count; i++) {
         // Gegner werden gleichmäßig um Link herum aufgestellt, wenn es mehrere sind
         int rotationOffset = 0x8000;
@@ -62,11 +64,14 @@ void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, f
         s16 enemyRotY = yaw + 0x8000;
         Actor_Spawn(&gPlayState->actorCtx, gPlayState, actorId, player->actor.world.pos.x + offsetX,
                     player->actor.world.pos.y, player->actor.world.pos.z + offsetZ, 0, enemyRotY, 0, params, 0);
+        if (actorId == ACTOR_EN_DH) {
+            SpawnEnemy(ACTOR_EN_DHA, 0, 4);
+        }
     }
 }
 
 void PunishmentManager::SpawnRandomEnemy() {
-    enemyIndex = rand() % ENEMY_LIST.size();
+    //enemyIndex = rand() % ENEMY_LIST.size();
     SpawnEnemy(ENEMY_LIST[enemyIndex].actorId, ENEMY_LIST[enemyIndex].params, ENEMY_LIST[enemyIndex].count,
                ENEMY_LIST[enemyIndex].spawnDistanceToLink);
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
