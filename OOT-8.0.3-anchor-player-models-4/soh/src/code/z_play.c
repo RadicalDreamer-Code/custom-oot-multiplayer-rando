@@ -838,14 +838,14 @@ void Play_Update(PlayState* play) {
         }
 
         //TEST-TEST-TEST:
-        if (CHECK_BTN_ALL(input[0].press.button, BTN_Z) && !quizWasTriggeredWithZ) {
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_CUP) && !quizWasTriggeredWithZ) {
             //Play_TriggerRespawn(play);
             //GetItemEntry getItemEntry = ItemTable_Retrieve(GI_ICE_TRAP);
             //GiveItemEntryWithoutActor(gPlayState, getItemEntry);
             //Player_InBlockingCsMode(play, GET_PLAYER(play));
 
 
-            // Quizdialog mit Z aufrufen. Falls nicht auskommentiert, dürfen auch die Callbacks oben nicht auskommentiert werden, sonst bleibt der Input geblockt
+            // Quizdialog mit C UP aufrufen. Falls nicht auskommentiert, dürfen auch die Callbacks oben nicht auskommentiert werden, sonst bleibt der Input geblockt
 
             Player* player = GET_PLAYER(play);
             player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;

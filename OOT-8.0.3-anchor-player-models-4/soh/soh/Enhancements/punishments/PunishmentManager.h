@@ -12,7 +12,7 @@
 
 class PunishmentManager {
   public:
-    static void SpawnEnemy(ActorID actorId, int16_t params);
+    static void SpawnEnemy(ActorID actorId, int16_t params = 0, int count = 1, float spawnDistanceToLink = 70);
 
   public:
     static void SpawnRandomEnemy();
