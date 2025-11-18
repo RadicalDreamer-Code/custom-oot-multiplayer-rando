@@ -20,6 +20,9 @@ struct EnemySpawnInfo {
 };
 
 static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
+    // https : // zeldamodding.net/zelda-oot-enemy-actor-list/
+    // Actor IDs: https://wiki.cloudmodding.com/oot/Actor_List_(Variables)
+    { ACTOR_EN_TORCH2, 0 }, // Dark Link
     { ACTOR_EN_DH, 0},           // Großer Hirnsauger
     { ACTOR_EN_EIYER, 10, 3 },   // Rochenviecher aus Jabu-Jabu
     { ACTOR_EN_BUBBLE, 0 , 5 },  // Blasengegner aus Jabu-Jabu
@@ -47,7 +50,25 @@ static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     { ACTOR_EN_WF, 8, 2 },       // Wolfos 
     { ACTOR_EN_WF, 9, 2 },       // White Wolfos 
     { ACTOR_EN_IK, 8 },          // Iron Knuckle
-    { ACTOR_EN_IK, 8, 10 }       // Death Penalty :D
+    { ACTOR_EN_IK, 8, 10 },      // Death Penalty :D
+    { ACTOR_EN_AM, 1, 2, 10},    // Armos, Statuending
+    { ACTOR_EN_BILI, -1, 3},     // Qualle/Stinger
+    { ACTOR_EN_CROW, 1, 5 },     // Guay evtl TODO: soll nicht nachspawnen, custom param
+    { ACTOR_EN_BW, 0, 3},        // Feuerschnecke
+    { ACTOR_EN_FZ, 0, 2},        // Freezard
+    { ACTOR_EN_DEKUBABA, 1, 2},  // Big Deku Baba
+    { ACTOR_EN_DEKUBABA, 2, 3},  // Small Deku Baba
+    { ACTOR_EN_DODOJR, 0, 3 },   // Kleiner Dodongo
+    { ACTOR_EN_BB, -2, 3 },      // Fliegender Totenkopf Variante
+    { ACTOR_EN_BB, -1, 2 },      // Fliegender Totenkopf Variante
+    { ACTOR_EN_PO_FIELD, 0, 2}   // Poe spawnen sehr spät aber ok TODO: Evtl mit Custom Param schneller spawnen
+    // { ACTOR_EN_VALI, 1, 2},   // Große Qualle funktioniert nicht
+    // { ACTOR_EN_ANUBICE, 0, 3},// Anubis bewegen sich nicht, sind aber eh lame
+    // { ACTOR_EN_BIGOKUTA, 3 }, // Großer Okto, super buggy
+    // { ACTOR_EN_OKUTA, 0x10 }, // Oktorok funktioniert nicht, TODO: Custom param für spawn Bedingung
+    // { ACTOR_EN_REEBA, 0 },    // Leever braucht Sand Surface type TODO: Custom param für any surface
+    // { ACTOR_EN_REEBA, 1 },    // Leever big braucht Sand Surface type TODO: Custom param für any surface
+    // { ACTOR_EN_VM, 1, 2 }     // Beamos und Big Beamos greigen nicht an: TODO Custom Param
 };
 
 void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, float spawnDistanceToLink) {
@@ -71,7 +92,7 @@ void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, f
 }
 
 void PunishmentManager::SpawnRandomEnemy() {
-    //enemyIndex = rand() % ENEMY_LIST.size();
+    enemyIndex = rand() % ENEMY_LIST.size();
     SpawnEnemy(ENEMY_LIST[enemyIndex].actorId, ENEMY_LIST[enemyIndex].params, ENEMY_LIST[enemyIndex].count,
                ENEMY_LIST[enemyIndex].spawnDistanceToLink);
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
