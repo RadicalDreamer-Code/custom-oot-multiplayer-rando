@@ -22,6 +22,12 @@ void QuestionManager::OnQuestionAnswered(uint8_t option) {
     } else {
         Audio_PlaySoundGeneral(NA_SE_EN_GANON_LAUGH, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         PunishmentManager::ExecuteRandomPunishment();
+        // Signal Server to execute the punishment on all clients
+        nlohmann::json payload;
+        payload["type"] = "SIGNAL_PUNISHMENT";
+        payload["data"] = PunishmentManager::lastPunishmentType;
+        GameInteractorAnchor::Instance->TransmitJsonToRemote(payload);
+
     }
 
     // TODO: Let QuestionManager send response to server in order to punish all players
@@ -717,6 +723,13 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
         } catch (const std::exception& e) {
             SPDLOG_ERROR("[Anchor] Error parsing questions: {}", e.what());
         }
+    }
+
+    if (payload["type"] == "SIGNAL_PUNISHMENT") {
+        auto data = payload["data"];
+        auto clientId = payload["clientId"];
+        //TODO: Handle different type of punishments
+        PunishmentManager::ExecuteRandomPunishment();
     }
 
 }

@@ -46,6 +46,11 @@ interface IncreaseHealthPacket extends BasePacket {
   type: "INCREASE_HEALTH";
 }
 
+interface SignalPunishmentPacket extends BasePacket {
+  type: "SIGNAL_PUNISHMENT";
+  data: string;
+}
+
 interface QuestionsPacket extends BasePacket {
   type: "RECEIVE_QUESTIONS";
   message: string;
@@ -118,6 +123,7 @@ type Packet =
   | AllClientDataPacket
   | PushSaveStatePacket
   | QuestionsPacket
+  | SignalPunishmentPacket
   | OtherPackets;
 
 interface ServerStats {
@@ -420,6 +426,12 @@ class Client {
       if (!this.room) {
         this.log("Not in a room, ignoring packet");
         return;
+      }
+
+      if (packetObject.type === "SIGNAL_PUNISHMENT") {
+        console.log("SIGNAL_PUNISHMENT packet received");
+        console.log(packetObject);
+        this.room.broadcastPacket(packetObject, this);
       }
 
       if (packetObject.targetClientId) {

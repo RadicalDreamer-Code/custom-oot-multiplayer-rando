@@ -99,5 +99,10 @@ void PunishmentManager::SpawnRandomEnemy() {
 }
 
 void PunishmentManager::ExecuteRandomPunishment() {
+    // TODO: have multiple types
+
+    lastPunishmentType = PunishmentType::SpawnRandomEnemy;
     SpawnRandomEnemy();
 }
+
+PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::None;
