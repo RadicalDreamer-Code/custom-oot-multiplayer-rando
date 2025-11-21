@@ -138,7 +138,7 @@ void PunishmentManager::ExecuteRandomPunishment() {
     // TODO: have multiple types
 
     PunishmentType punishment = GetRandomPunishment();
-
+   
     switch (punishment) { 
         case PunishmentType::SpawnRandomEnemy:
             SpawnRandomEnemy();
@@ -160,19 +160,62 @@ void PunishmentManager::TeleportPlayerToEntrance(int16_t entranceIndex) {
     gSaveContext.nextTransitionType = TRANS_TYPE_FADE_WHITE;
 }
 
+static bool IsEntranceDiscovered(s16 entranceIndex) {
+    if (entranceIndex < 0) {
+        return false;
+    }
+
+    const int bitsPerWord = 32;
+    int idx = entranceIndex / bitsPerWord;
+    int bit = entranceIndex % bitsPerWord;
+
+    if (idx >= SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT) {
+        return false;
+    }
+
+    return (gSaveContext.sohStats.entrancesDiscovered[idx] & (1u << bit)) != 0;
+}
+
+#include <vector>
+
+static s16 GetRandomDiscoveredEntrance() {
+    std::vector<s16> discoveredList;
+
+    const int bitsPerWord = 32;
+    const int maxEntrances = SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT * bitsPerWord;
+
+    for (s16 entrance = 0; entrance < maxEntrances; ++entrance) {
+        if (IsEntranceDiscovered(entrance)) {
+            discoveredList.push_back(entrance);
+        }
+    }
+
+    if (discoveredList.empty()) {
+        return -1;
+    }
+
+    s32 idx = rand() % discoveredList.size();
+    return discoveredList[idx];
+}
+
 void PunishmentManager::TeleportPlayerToRandomDiscoveredLocation() {
-    if (!GameInteractor::IsSaveLoaded() || sDiscoveredEntrances.empty()) {
+    //if (!GameInteractor::IsSaveLoaded() || sDiscoveredEntrances.empty()) {
+    //    printf("Keine bekannten Orte zum Teleportieren!");
+    //    return;
+    //}
+    //int idx = rand() % sDiscoveredEntrances.size();
+    //int16_t entrance = sDiscoveredEntrances[idx];
+    
+    int16_t entrance = GetRandomDiscoveredEntrance();
+    if (entrance < 0) {
         printf("Keine bekannten Orte zum Teleportieren!");
         return;
     }
-
-    int idx = rand() % sDiscoveredEntrances.size();
-    int16_t entrance = sDiscoveredEntrances[idx];
     TeleportPlayerToEntrance(entrance);
 }
 
 PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::None;
 
 void PunishmentManager::InitPunishmentManager() {
-    RegisterDiscoveredEntrancesTracker();
+    //RegisterDiscoveredEntrancesTracker();
 }
