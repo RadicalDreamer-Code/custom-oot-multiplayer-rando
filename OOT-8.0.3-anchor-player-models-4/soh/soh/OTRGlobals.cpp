@@ -91,6 +91,7 @@ GameInteractorAnchor* GameInteractorAnchor::Instance;
 #endif
 
 #include "Enhancements/mods.h"
+#include "Enhancements/punishments/PunishmentManager.h"
 #include "Enhancements/game-interactor/GameInteractor.h"
 #include <libultraship/libultraship.h>
 
@@ -1119,6 +1120,7 @@ extern "C" void InitOTR() {
     DebugConsole_Init();
 
     InitMods();
+    PunishmentManager::InitPunishmentManager();
     ActorDB::AddBuiltInCustomActors();
 
     time_t now = time(NULL);

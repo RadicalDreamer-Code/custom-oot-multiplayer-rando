@@ -9,8 +9,11 @@
 #include <soh/Enhancements/presets.h>
 #include <soh/Enhancements/randomizer/randomizer_check_tracker.h>
 #include <soh/util.h>
+#include "soh/Enhancements/game-interactor/GameInteractor_Anchor.h"
 
 u32 enemyIndex = 0;
+
+static std::vector<int16_t> sDiscoveredEntrances;
 
 struct EnemySpawnInfo {
     ActorID actorId;
@@ -79,6 +82,20 @@ static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     // { ACTOR_EN_VM, 1, 2 }     // Beamos und Big Beamos greigen nicht an: TODO Custom Param
 };
 
+// Nach betreten jeder Loading Zone den Ort in die Liste eintragen, wenn er noch nicht drin steht
+void RegisterDiscoveredEntrancesTracker() {
+    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnTransitionEnd>([](int32_t sceneNum) {
+        if (!GameInteractor::IsSaveLoaded()) {
+            return;
+        }
+        int16_t entrance = gSaveContext.entranceIndex;
+        if (std::find(sDiscoveredEntrances.begin(), sDiscoveredEntrances.end(), entrance) ==
+            sDiscoveredEntrances.end()) {
+            sDiscoveredEntrances.push_back(entrance);
+        }
+    });
+}
+
 void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, float spawnDistanceToLink) {
     Player* player = GET_PLAYER(gPlayState);
         player->invincibilityTimer = 60; // Invincibility, damit man nicht instant nach dem Spawn gedamaged wird
@@ -106,11 +123,56 @@ void PunishmentManager::SpawnRandomEnemy() {
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
 }
 
+static PunishmentType GetRandomPunishment() {
+    // Liste aller erlaubten Werte (ohne None)
+    static const PunishmentType punishments[] = { PunishmentType::SpawnRandomEnemy,
+                                                  PunishmentType::TeleportToRandomDiscoveredLocation };
+
+    int count = sizeof(punishments) / sizeof(punishments[0]);
+    int index = rand() % count;
+
+    return punishments[index];
+}
+
 void PunishmentManager::ExecuteRandomPunishment() {
     // TODO: have multiple types
 
-    lastPunishmentType = PunishmentType::SpawnRandomEnemy;
-    SpawnRandomEnemy();
+    PunishmentType punishment = GetRandomPunishment();
+
+    switch (punishment) { 
+        case PunishmentType::SpawnRandomEnemy:
+            SpawnRandomEnemy();
+            lastPunishmentType = PunishmentType::SpawnRandomEnemy;
+            break;
+        case PunishmentType::TeleportToRandomDiscoveredLocation:
+            TeleportPlayerToRandomDiscoveredLocation();
+            lastPunishmentType = PunishmentType::TeleportToRandomDiscoveredLocation;
+            break;
+        default:
+            break;
+    }
+}
+
+void PunishmentManager::TeleportPlayerToEntrance(int16_t entranceIndex) {
+    gPlayState->nextEntranceIndex = entranceIndex;
+    gPlayState->transitionTrigger = TRANS_TRIGGER_START;
+    gPlayState->transitionType = TRANS_TYPE_FADE_WHITE;
+    gSaveContext.nextTransitionType = TRANS_TYPE_FADE_WHITE;
+}
+
+void PunishmentManager::TeleportPlayerToRandomDiscoveredLocation() {
+    if (!GameInteractor::IsSaveLoaded() || sDiscoveredEntrances.empty()) {
+        printf("Keine bekannten Orte zum Teleportieren!");
+        return;
+    }
+
+    int idx = rand() % sDiscoveredEntrances.size();
+    int16_t entrance = sDiscoveredEntrances[idx];
+    TeleportPlayerToEntrance(entrance);
 }
 
 PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::None;
+
+void PunishmentManager::InitPunishmentManager() {
+    RegisterDiscoveredEntrancesTracker();
+}
