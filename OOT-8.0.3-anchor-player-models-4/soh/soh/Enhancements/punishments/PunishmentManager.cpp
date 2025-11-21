@@ -22,7 +22,11 @@ struct EnemySpawnInfo {
 static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     // https : // zeldamodding.net/zelda-oot-enemy-actor-list/
     // Actor IDs: https://wiki.cloudmodding.com/oot/Actor_List_(Variables)
-    { ACTOR_EN_TORCH2, 0 }, // Dark Link
+    { ACTOR_EN_PO_SISTERS, 8 },  // Purple Poe Forest Temple Mini Boss
+    { ACTOR_EN_NY, 0, 3 },       // Spike
+    { ACTOR_EN_SB, 0, 3 },       // Shellblade / Muschel
+    { ACTOR_EN_CLEAR_TAG, 1 , 3},// Arwing
+    { ACTOR_EN_TORCH2, 0 },      // Dark Link
     { ACTOR_EN_DH, 0},           // Großer Hirnsauger
     { ACTOR_EN_EIYER, 10, 3 },   // Rochenviecher aus Jabu-Jabu
     { ACTOR_EN_BUBBLE, 0 , 5 },  // Blasengegner aus Jabu-Jabu
@@ -42,6 +46,7 @@ static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     { ACTOR_EN_FIREFLY, 4, 5 },  // Eis Fledermaus
     { ACTOR_EN_FIREFLY, 2, 5 },  // Fledermaus
     { ACTOR_EN_MB, 0 },          // Moblin mit Keule
+    { ACTOR_EN_MB, -1, 3 },      // Moblin mit Speer
     { ACTOR_EN_FD, 0 },          // Feuertänzer Miniboss
     { ACTOR_EN_RR, 0 },          // Raubschleim
     { ACTOR_EN_TITE, 0, 3 },     // Roter Arachno
@@ -62,6 +67,9 @@ static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     { ACTOR_EN_BB, -2, 3 },      // Fliegender Totenkopf Variante
     { ACTOR_EN_BB, -1, 2 },      // Fliegender Totenkopf Variante
     { ACTOR_EN_PO_FIELD, 0, 2}   // Poe spawnen sehr spät aber ok TODO: Evtl mit Custom Param schneller spawnen
+    // { ACTOR_EN_GELDB, 0 },       // Gerudo Kriegerin braucht Carpenter zum laden oder so
+    // { ACTOR_EN_DEKUNUTS, 0, 3 },  // Mad Scrub, es spawnen keine Nüsse, wenn sie schießen
+    // { ACTOR_EN_BA, 0 },           // Tentacle funktioniert zwar, aber spawnt zu tief und bräuchte nen Sonder Case für spawning Höhe
     // { ACTOR_EN_VALI, 1, 2},   // Große Qualle funktioniert nicht
     // { ACTOR_EN_ANUBICE, 0, 3},// Anubis bewegen sich nicht, sind aber eh lame
     // { ACTOR_EN_BIGOKUTA, 3 }, // Großer Okto, super buggy

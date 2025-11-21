@@ -185,7 +185,9 @@ void EnPoSisters_Init(Actor* thisx, PlayState* play) {
 
     // Skip Poe Intro Cutscene
     if (IS_RANDO && thisx->params == 4124 && !Randomizer_GetSettingValue(RSK_ENABLE_GLITCH_CUTSCENES)) {
-        Flags_SetSwitch(play, 0x1B);
+        // Edit: Not for custom params
+        if (&this->actor.params < 8 || &this->actor.params > 11)
+            Flags_SetSwitch(play, 0x1B);
         Actor_Kill(thisx);
     }
 
@@ -574,7 +576,8 @@ void func_80ADA2BC(EnPoSisters* this, PlayState* play) {
     this->unk_196 = 32;
     this->actor.world.rot.y = D_80ADD79C[this->unk_194];
     this->actor.home.pos.y = this->actor.world.pos.y;
-    if (this->unk_194 == 0) {
+    // Edit: not for custom params
+    if (this->unk_194 == 0 && (&this->actor.params < 8 || &this->actor.params > 11)) {
         Flags_SetSwitch(play, 0x1B);
     }
     Audio_PlayActorSound2(&this->actor, NA_SE_EV_FLAME_IGNITION);
@@ -823,9 +826,11 @@ void func_80ADAFC0(EnPoSisters* this, PlayState* play) {
 void func_80ADB17C(EnPoSisters* this, PlayState* play) {
     this->unk_19A++;
     if (this->unk_19A == 64) {
-        Flags_SetSwitch(play, this->actor.params);
+        // Edit: not for custom params
+        if (&this->actor.params < 8 || &this->actor.params > 11)
+            Flags_SetSwitch(play, this->actor.params);
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->actor.world.pos, 30, NA_SE_EV_FLAME_IGNITION);
-        if (this->unk_194 == 0) {
+        if (this->unk_194 == 0 && (&this->actor.params < 8 || &this->actor.params > 11)) {
             Flags_UnsetSwitch(play, 0x1B);
         }
         play->envCtx.unk_BF = 0xFF;
