@@ -142,15 +142,14 @@ void PunishmentManager::ExecuteRandomPunishment() {
     switch (punishment) { 
         case PunishmentType::SpawnRandomEnemy:
             SpawnRandomEnemy();
-            lastPunishmentType = PunishmentType::SpawnRandomEnemy;
             break;
         case PunishmentType::TeleportToRandomDiscoveredLocation:
             TeleportPlayerToRandomDiscoveredLocation();
-            lastPunishmentType = PunishmentType::TeleportToRandomDiscoveredLocation;
             break;
         default:
             break;
     }
+    lastPunishmentType = punishment;
 }
 
 void PunishmentManager::TeleportPlayerToEntrance(int16_t entranceIndex) {

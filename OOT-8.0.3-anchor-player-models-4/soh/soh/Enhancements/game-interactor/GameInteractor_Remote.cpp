@@ -73,7 +73,7 @@ void GameInteractor::DisableRemoteInteractor() {
 }
 
 void GameInteractor::TransmitDataToRemote(const char* payload) {
-    SDLNet_TCP_Send(remoteSocket, payload, strlen(payload) + 1);
+    if (remoteSocket != nullptr) SDLNet_TCP_Send(remoteSocket, payload, strlen(payload) + 1);
 }
 
 // Appends a newline character to the end of the json payload and sends it to the remote
