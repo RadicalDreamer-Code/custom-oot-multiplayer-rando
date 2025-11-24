@@ -88,11 +88,12 @@ void RegisterDiscoveredEntrancesTracker() {
         if (!GameInteractor::IsSaveLoaded()) {
             return;
         }
-        int16_t entrance = gSaveContext.entranceIndex;
-        if (std::find(sDiscoveredEntrances.begin(), sDiscoveredEntrances.end(), entrance) ==
+         Entrance_SetCustomEntranceDiscovered(gSaveContext.entranceIndex, false);
+         //int16_t entrance = gSaveContext.entranceIndex;
+         /* if (std::find(sDiscoveredEntrances.begin(), sDiscoveredEntrances.end(), entrance) ==
             sDiscoveredEntrances.end()) {
             sDiscoveredEntrances.push_back(entrance);
-        }
+        }*/
     });
 }
 
@@ -172,7 +173,7 @@ static bool IsEntranceDiscovered(s16 entranceIndex) {
         return false;
     }
 
-    return (gSaveContext.sohStats.entrancesDiscovered[idx] & (1u << bit)) != 0;
+    return (gSaveContext.sohStats.customEntrances[idx] & (1u << bit)) != 0;
 }
 
 #include <vector>
@@ -198,12 +199,12 @@ static s16 GetRandomDiscoveredEntrance() {
 }
 
 void PunishmentManager::TeleportPlayerToRandomDiscoveredLocation() {
-    //if (!GameInteractor::IsSaveLoaded() || sDiscoveredEntrances.empty()) {
-    //    printf("Keine bekannten Orte zum Teleportieren!");
-    //    return;
-    //}
-    //int idx = rand() % sDiscoveredEntrances.size();
-    //int16_t entrance = sDiscoveredEntrances[idx];
+    /* if (!GameInteractor::IsSaveLoaded() || sDiscoveredEntrances.empty()) {
+        printf("Keine bekannten Orte zum Teleportieren!");
+        return;
+    }
+    int idx = rand() % sDiscoveredEntrances.size();
+    int16_t entrance = sDiscoveredEntrances[idx]; */
     
     int16_t entrance = GetRandomDiscoveredEntrance();
     if (entrance < 0) {
@@ -216,5 +217,5 @@ void PunishmentManager::TeleportPlayerToRandomDiscoveredLocation() {
 PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::None;
 
 void PunishmentManager::InitPunishmentManager() {
-    //RegisterDiscoveredEntrancesTracker();
+    RegisterDiscoveredEntrancesTracker();
 }

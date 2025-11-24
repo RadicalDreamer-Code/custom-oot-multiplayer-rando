@@ -128,6 +128,7 @@ void Anchor_DamagePlayer(uint32_t actorIndex, u8 damageEffect, u8 damageValue);
 void Anchor_GameComplete();
 void Anchor_RequestTeleport(uint32_t clientId);
 void Anchor_TeleportToPlayer(uint32_t clientId);
+void Anchor_CustomEntranceDiscovered(uint16_t entranceIndex);
 
 #ifdef __cplusplus
 }

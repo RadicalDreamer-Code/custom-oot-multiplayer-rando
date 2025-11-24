@@ -835,3 +835,48 @@ void Entrance_SetEntranceDiscovered(u16 entranceIndex, u8 isReversedEntrance) {
         Save_SaveSection(SECTION_ID_ENTRANCES);
     }
 }
+
+u8 Entrance_GetCustomIsEntranceDiscovered(u16 entranceIndex) {
+    u16 bitsPerIndex = sizeof(u32) * 8;
+    u32 idx = entranceIndex / bitsPerIndex;
+    if (idx < SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT) {
+        u32 entranceBit = 1 << (entranceIndex - (idx * bitsPerIndex));
+        return (gSaveContext.sohStats.customEntrances[idx] & entranceBit) != 0;
+    }
+    return 0;
+}
+
+void Entrance_SetCustomEntranceDiscovered(u16 entranceIndex, u8 isReversedEntrance) {
+    // Skip if already set to save time from setting the connected entrance or
+    // if this entrance is outside of the randomized entrance range (i.e. is a dynamic entrance)
+    if (entranceIndex > MAX_ENTRANCE_RANDO_USED_INDEX || Entrance_GetCustomIsEntranceDiscovered(entranceIndex)) {
+        return;
+    }
+
+#ifdef ENABLE_REMOTE_CONTROL
+    Anchor_CustomEntranceDiscovered(entranceIndex);
+#endif
+
+    u16 bitsPerIndex = sizeof(u32) * 8;
+    u32 idx = entranceIndex / bitsPerIndex;
+    if (idx < SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT) {
+        u32 entranceBit = 1 << (entranceIndex - (idx * bitsPerIndex));
+        gSaveContext.sohStats.customEntrances[idx] |= entranceBit;
+
+        return;
+        // Set reverse entrance when not decoupled
+        if (!Randomizer_GetSettingValue(RSK_DECOUPLED_ENTRANCES) && !isReversedEntrance) {
+            for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
+                if (entranceIndex == gSaveContext.entranceOverrides[i].index) {
+                    Entrance_SetCustomEntranceDiscovered(gSaveContext.entranceOverrides[i].overrideDestination, true);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Save entrancesDiscovered when it is not the reversed entrance
+    if (!isReversedEntrance) {
+        Save_SaveSection(SECTION_ID_ENTRANCES);
+    }
+}

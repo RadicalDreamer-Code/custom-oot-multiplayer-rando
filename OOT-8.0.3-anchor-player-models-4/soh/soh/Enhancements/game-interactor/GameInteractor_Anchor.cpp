@@ -339,6 +339,7 @@ std::vector<std::pair<uint16_t, int16_t>> receivedItems = {};
 std::vector<uint16_t> discoveredEntrances = {};
 std::vector<AnchorMessage> anchorMessages = {};
 uint32_t notificationId = 0;
+std::vector<uint16_t> customEntrances = {};
 
 void Anchor_DisplayMessage(AnchorMessage message = {}) {
     message.id = notificationId++;
@@ -641,6 +642,11 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
         discoveredEntrances.push_back(entranceIndex);
         Entrance_SetEntranceDiscovered(entranceIndex, 1);
     }
+    if (payload["type"] == "CUSTOM_ENTRANCE_DISCOVERED") {
+        auto customEntranceIndex = payload["customEntranceIndex"].get<uint16_t>();
+        customEntrances.push_back(customEntranceIndex);
+        Entrance_SetCustomEntranceDiscovered(customEntranceIndex, 1);
+    }
     if (payload["type"] == "UPDATE_BEANS_BOUGHT" && GameInteractor::IsSaveLoaded()) {
         BEANS_BOUGHT = payload["amount"].get<uint8_t>();
     }
@@ -800,6 +806,10 @@ void Anchor_ParseSaveStateFromRemote(nlohmann::json payload) {
 
     for (int i = 0; i < SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT; i++) {
         gSaveContext.sohStats.entrancesDiscovered[i] = loadedData.sohStats.entrancesDiscovered[i];
+    }
+
+    for (int i = 0; i < SAVEFILE_ENTRANCES_DISCOVERED_IDX_COUNT; i++) {
+        gSaveContext.sohStats.customEntrances[i] = loadedData.sohStats.customEntrances[i];
     }
 
     CheckTracker::Teardown();
@@ -1128,6 +1138,25 @@ void Anchor_EntranceDiscovered(uint16_t entranceIndex) {
 
     payload["type"] = "ENTRANCE_DISCOVERED";
     payload["entranceIndex"] = entranceIndex;
+
+    GameInteractorAnchor::Instance->TransmitJsonToRemote(payload);
+}
+
+void Anchor_CustomEntranceDiscovered(uint16_t entranceIndex) {
+    if (!GameInteractor::Instance->isRemoteInteractorConnected || !GameInteractor::Instance->IsSaveLoaded())
+        return;
+
+    // If the entrance exists in discoveredEntrances, remove it from the list and don't emit the packet
+    auto it = std::find(customEntrances.begin(), customEntrances.end(), entranceIndex);
+    if (it != customEntrances.end()) {
+        customEntrances.erase(it);
+        return;
+    }
+
+    nlohmann::json payload;
+
+    payload["type"] = "CUSTOM_ENTRANCE_DISCOVERED";
+    payload["customEntranceIndex"] = entranceIndex;
 
     GameInteractorAnchor::Instance->TransmitJsonToRemote(payload);
 }

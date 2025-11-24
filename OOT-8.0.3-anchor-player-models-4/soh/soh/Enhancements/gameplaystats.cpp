@@ -333,6 +333,9 @@ void LoadStatsVersion1() {
     SaveManager::Instance->LoadArray("entrancesDiscovered", ARRAY_COUNT(gSaveContext.sohStats.entrancesDiscovered), [](size_t i) {
         SaveManager::Instance->LoadData("", gSaveContext.sohStats.entrancesDiscovered[i]);
     });
+    SaveManager::Instance->LoadArray(
+        "customEntrances", ARRAY_COUNT(gSaveContext.sohStats.customEntrances),
+        [](size_t i) { SaveManager::Instance->LoadData("", gSaveContext.sohStats.customEntrances[i]); });
 }
 
 void SaveStats(SaveContext* saveContext, int sectionID, bool fullSave) {
@@ -374,6 +377,9 @@ void SaveStats(SaveContext* saveContext, int sectionID, bool fullSave) {
     SaveManager::Instance->SaveArray("entrancesDiscovered", ARRAY_COUNT(saveContext->sohStats.entrancesDiscovered), [&](size_t i) {
         SaveManager::Instance->SaveData("", saveContext->sohStats.entrancesDiscovered[i]);
     });
+    SaveManager::Instance->SaveArray(
+        "customEntrances", ARRAY_COUNT(saveContext->sohStats.customEntrances),
+        [&](size_t i) { SaveManager::Instance->SaveData("", saveContext->sohStats.customEntrances[i]); });
 }
 
 void GameplayStatsRow(const char* label, const std::string& value, ImVec4 color = COLOR_WHITE) {
@@ -681,6 +687,9 @@ void InitStats(bool isDebug) {
     for (int entrancesIdx = 0; entrancesIdx < ARRAY_COUNT(gSaveContext.sohStats.entrancesDiscovered); entrancesIdx++) {
         gSaveContext.sohStats.entrancesDiscovered[entrancesIdx] = 0;
     }
+    for (int entrancesIdx = 0; entrancesIdx < ARRAY_COUNT(gSaveContext.sohStats.customEntrances); entrancesIdx++) {
+        gSaveContext.sohStats.customEntrances[entrancesIdx] = 0;
+    }
 
     SohUtils::CopyStringToCharArray(gSaveContext.sohStats.buildVersion, std::string((char*)gBuildVersion),
                                     ARRAY_COUNT(gSaveContext.sohStats.buildVersion));
@@ -856,6 +865,7 @@ void GameplayStatsWindow::InitElement() {
     SaveManager::Instance->AddSaveFunction("sohStats", 1, SaveStats, true, SECTION_PARENT_NONE);
     // Add subsections, parent of "sohStats". Not sure how to do this without the redundant references to "SaveStats"
     SaveManager::Instance->AddSaveFunction("entrances", 1, SaveStats, false, SECTION_ID_STATS);
+    SaveManager::Instance->AddSaveFunction("customEntrances", 1, SaveStats, false, SECTION_ID_STATS);
     SaveManager::Instance->AddSaveFunction("scenes", 1, SaveStats, false, SECTION_ID_STATS);
     SaveManager::Instance->AddInitFunction(InitStats);
 }
