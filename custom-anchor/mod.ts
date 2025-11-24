@@ -54,6 +54,7 @@ interface SignalPunishmentPacket extends BasePacket {
 interface QuestionsPacket extends BasePacket {
   type: "RECEIVE_QUESTIONS";
   message: string;
+  lastIndex: number;
 }
 
 interface CheckTrackerData {
@@ -114,6 +115,19 @@ interface OtherPackets extends BasePacket {
   type: "REQUEST_SAVE_STATE" | "GAME_COMPLETE" | "HEARTBEAT";
 }
 
+interface QuizStatePacket extends BasePacket {
+  type: "QUIZ_STATE";
+  lastQuestionIndex: number;
+  name: string;
+}
+
+interface PlayerQuizState {
+  [playerName: string]: {
+    currentQuestionIndex: number;
+    lastUpdated: string;
+  };
+}
+
 type Packet =
   | UpdateClientDataPacket
   | DisableAnchorPacket
@@ -124,6 +138,7 @@ type Packet =
   | PushSaveStatePacket
   | QuestionsPacket
   | SignalPunishmentPacket
+  | QuizStatePacket
   | OtherPackets;
 
 interface ServerStats {
@@ -275,6 +290,7 @@ class Server {
     this.log(`Server Started on port ${port}`);
     // var datestring = getCurrentTime();
     await createFile(currentTime + ".txt", "Initial content.\n");
+    quizState = await loadQuizState();
     try {
       for await (const connection of this.listener) {
         try {
@@ -432,6 +448,18 @@ class Client {
         console.log("SIGNAL_PUNISHMENT packet received");
         console.log(packetObject);
         this.room.broadcastPacket(packetObject, this);
+      }
+
+      if (packetObject.type === "QUIZ_STATE") {
+        console.log("QUIZ_STATE packet received");
+        console.log(packetObject);
+        const questionIndex = packetObject.lastQuestionIndex;
+        const clientName = packetObject.name;
+        // Update quiz state file with this player's current question index
+        updatePlayerQuizState(clientName, questionIndex);
+        console.log(
+          `Updated quiz state: ${clientName} is on question ${questionIndex}`
+        );
       }
 
       if (packetObject.targetClientId) {
@@ -645,7 +673,43 @@ function findDelimiterIndex(data: Uint8Array): number {
 
 // Question Game
 const manager = new QuizManager();
+let quizState: PlayerQuizState = {};
 let quizAssignments = new Map<string, any>();
+const quizStateFilePath = "./questionGame/quiz-state.json";
+
+async function loadQuizState(): Promise<PlayerQuizState> {
+  try {
+    const content = await Deno.readTextFile(quizStateFilePath);
+    console.log("Quiz state loaded");
+    return JSON.parse(content);
+  } catch (error) {
+    // File doesn't exist yet, return empty state
+    return {};
+  }
+}
+
+async function saveQuizState(state: PlayerQuizState): Promise<void> {
+  try {
+    quizState = state;
+    await Deno.mkdir("./questionGame", { recursive: true });
+    await Deno.writeTextFile(quizStateFilePath, JSON.stringify(state, null, 2));
+    console.log(`Quiz state saved for ${Object.keys(state).length} players`);
+  } catch (error) {
+    console.error(`Error saving quiz state: ${error.message}`);
+  }
+}
+
+async function updatePlayerQuizState(
+  playerName: string,
+  questionIndex: number
+): Promise<void> {
+  const state = await loadQuizState();
+  state[playerName] = {
+    currentQuestionIndex: questionIndex,
+    lastUpdated: getCurrentDateTime(),
+  };
+  await saveQuizState(state);
+}
 
 async function loadShuffledQuestions() {
   try {
@@ -860,9 +924,14 @@ function sendQuestions(client: Client) {
 
   if (!playerName) {
     console.log(`Client ${client.id} has no name, cannot assign questions`);
+    let lastIndex: number = 0;
+    lastIndex = quizState[playerName]
+      ? quizState[playerName].currentQuestionIndex
+      : 0;
     return client.sendPacket({
       type: "RECEIVE_QUESTIONS",
       message: JSON.stringify({ questionGame: { questions: [] } }),
+      lastIndex: lastIndex,
     });
   }
 
