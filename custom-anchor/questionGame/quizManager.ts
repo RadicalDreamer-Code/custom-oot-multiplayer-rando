@@ -1,10 +1,25 @@
 import { join } from "https://deno.land/std@0.208.0/path/mod.ts";
 
+interface Answer {
+  text: string;
+  isCorrect: boolean;
+}
+
+interface ApiQuestion {
+  id: string;
+  questionText: string;
+  answers: Answer[];
+  difficulty: string;
+  createdBy: string;
+  createdAt: string;
+}
+
 interface Question {
   id: number;
   question: string;
   options: string[];
   answerId: number;
+  createdBy?: string;
 }
 
 export interface PlayerData {
@@ -87,6 +102,119 @@ export class QuizManager {
     }
   }
 
+  async requestAllPlayerQuestions(
+    username: string,
+    password: string,
+    adminPassword: string
+  ): Promise<void> {
+    console.log("Sending request with credentials for user:", username);
+
+    // Encode credentials for Basic Auth
+    const credentials = btoa(`${username}:${password}`);
+
+    const response = await fetch(
+      "https://www.radicaldreamer.de/api/admin/questions",
+      {
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "x-admin-password": adminPassword,
+        },
+      }
+    );
+
+    console.log("Response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response:", errorText);
+      throw new Error(`Failed to fetch questions: ${response.statusText}`);
+    }
+
+    const apiQuestions: ApiQuestion[] = await response.json();
+    console.log(`Fetched ${apiQuestions.length} questions from API`);
+
+    // Group questions by creator
+    const questionsByCreator = new Map<string, ApiQuestion[]>();
+    for (const apiQ of apiQuestions) {
+      const creator = apiQ.createdBy;
+      if (!questionsByCreator.has(creator)) {
+        questionsByCreator.set(creator, []);
+      }
+      questionsByCreator.get(creator)!.push(apiQ);
+    }
+
+    const creators = Array.from(questionsByCreator.keys());
+    console.log(`Found questions from ${creators.length} creators:`, creators);
+
+    // Assign questions to players (each player gets questions NOT created by them)
+    const assignments = new Map<string, Question[]>();
+
+    for (const player of creators) {
+      const playerQuestions: Question[] = [];
+
+      // Get questions from all other creators
+      for (const creator of creators) {
+        if (creator !== player) {
+          const creatorQuestions = questionsByCreator.get(creator)!;
+
+          for (const apiQ of creatorQuestions) {
+            const correctAnswerIndex = apiQ.answers.findIndex(
+              (a) => a.isCorrect
+            );
+
+            const question: Question = {
+              id: playerQuestions.length + 1,
+              question: apiQ.questionText,
+              options: apiQ.answers.map((a) => a.text),
+              answerId: correctAnswerIndex !== -1 ? correctAnswerIndex : 0,
+              createdBy: apiQ.createdBy,
+            };
+
+            playerQuestions.push(question);
+          }
+        }
+      }
+
+      // Shuffle the questions for this player
+      const shuffled = this.shuffle(playerQuestions);
+      assignments.set(player, shuffled);
+
+      console.log(`Assigned ${shuffled.length} questions to ${player}`);
+    }
+
+    // Save all assignments to a single file with current date
+    const now = new Date();
+    const dateString = now.toISOString().split("T")[0]; // YYYY-MM-DD format
+    const filename = `quiz-${dateString}.json`;
+
+    // Create directory if it doesn't exist
+    try {
+      await Deno.mkdir("./questionGame", { recursive: true });
+    } catch (error) {
+      // Directory might already exist, ignore error
+    }
+
+    const filePath = join("./questionGame", filename);
+
+    // Convert Map to a plain object for JSON serialization
+    const quizData: Record<string, PlayerData> = {};
+    for (const [player, questions] of assignments) {
+      quizData[player] = {
+        questionGame: {
+          questions: questions,
+        },
+      };
+    }
+
+    await Deno.writeTextFile(filePath, JSON.stringify(quizData, null, 2));
+    console.log(`Saved all question assignments to ${filename}`);
+    console.log(
+      `File contains assignments for: ${Array.from(assignments.keys()).join(
+        ", "
+      )}`
+    );
+  }
+
   /**
    * Get the total number of questions in the pool
    */
@@ -135,11 +263,11 @@ export class QuizManager {
       ? questionsPerPlayer * playerIds.length
       : questionsPerPlayer * playerIds.length;
 
-    if (!allowDuplicates && totalQuestionsNeeded > this.questionPool.length) {
-      throw new Error(
-        `Not enough questions in pool. Need ${totalQuestionsNeeded} but only have ${this.questionPool.length}`
-      );
-    }
+    // if (!allowDuplicates && totalQuestionsNeeded > this.questionPool.length) {
+    //   throw new Error(
+    //     `Not enough questions in pool. Need ${totalQuestionsNeeded} but only have ${this.questionPool.length}`
+    //   );
+    // }
 
     if (allowDuplicates) {
       // Each player can get any question, duplicates allowed
@@ -253,27 +381,11 @@ export class QuizManager {
 if (import.meta.main) {
   const manager = new QuizManager();
 
-  // Load all player files
-  await manager.loadAllPlayerFiles("./questionGame");
+  // Fetch questions from API and assign them
+  const username = "oot";
+  const password = "dezrando";
+  const adminPassword = "admin123";
+  await manager.requestAllPlayerQuestions(username, password, adminPassword);
 
-  // Print statistics
-  manager.printStats();
-
-  // Assign 5 random questions to 2 players (without duplicates)
-  const assignments = manager.assignRandomQuestions(
-    ["player-1", "player-2"],
-    5,
-    false
-  );
-
-  console.log("\n=== Question Assignments ===");
-  for (const [playerId, questions] of assignments) {
-    console.log(`\n${playerId}:`);
-    questions.forEach((q, i) => {
-      console.log(`  ${i + 1}. ${q.question}`);
-    });
-  }
-
-  // Optionally save the assignments back to files
-  // await manager.savePlayerAssignments(assignments);
+  console.log("\nQuestion assignments have been saved to player JSON files!");
 }

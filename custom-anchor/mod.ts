@@ -533,6 +533,9 @@ class Room {
     client.room = this;
 
     this.broadcastAllClientData();
+
+    // Send questions to the newly connected client
+    sendQuestions(client);
   }
 
   removeClient(client: Client) {
@@ -642,15 +645,46 @@ function findDelimiterIndex(data: Uint8Array): number {
 
 // Question Game
 const manager = new QuizManager();
-await manager.loadAllPlayerFiles("./questionGame");
+let quizAssignments = new Map<string, any>();
 
-// Assign 10 unique questions to each of 2 players
-// Each question will only be used once
-const assignments = manager.assignRandomQuestions(
-  ["player-1", "player-2"],
-  10,
-  false // no duplicates
-);
+async function loadShuffledQuestions() {
+  try {
+    // Get the current date to find today's quiz file
+    const now = new Date();
+    const dateString = now.toISOString().split("T")[0];
+    const filename = `quiz-${dateString}.json`;
+    const filePath = `./questionGame/${filename}`;
+
+    console.log(`Loading shuffled questions from ${filename}...`);
+    const content = await Deno.readTextFile(filePath);
+    const quizData = JSON.parse(content);
+
+    // Convert to Map for easy lookup
+    quizAssignments.clear();
+    for (const [playerName, playerData] of Object.entries(quizData)) {
+      quizAssignments.set(playerName, playerData);
+    }
+
+    console.log(
+      `Loaded question assignments for ${quizAssignments.size} players:`,
+      Array.from(quizAssignments.keys()).join(", ")
+    );
+  } catch (error) {
+    console.error(`Error loading shuffled questions: ${error.message}`);
+    throw error;
+  }
+}
+
+// // Load existing player files on startup (for backward compatibility)
+// await manager.loadAllPlayerFiles("./questionGame");
+
+// // Assign 10 unique questions to each of 2 players
+// // Each question will only be used once
+// const assignments = manager.assignRandomQuestions(
+//   ["player-1", "player-2"],
+//   10,
+//   false // no duplicates
+// );
 
 // Server
 const server = new Server();
@@ -675,7 +709,7 @@ function enableRawMode() {
 // Key input listener for single key presses
 async function setupKeyListener() {
   console.log(
-    "Key listener active. Press 'e' for emergency broadcast, 'r' for DECREASE_HEALTH packet, 't' for INCREASE_HEALTH packet, 'i' to send questions, 'q' to quit, or any other key for help."
+    "Key listener active. Press 'e' for emergency broadcast, 'r' for DECREASE_HEALTH packet, 't' for INCREASE_HEALTH packet, 'i' to send questions, 'l' to load shuffled questions, 'f' to fetch questions from API, 'q' to quit, or any other key for help."
   );
 
   const buffer = new Uint8Array(1);
@@ -731,6 +765,33 @@ async function setupKeyListener() {
           console.log(`Questions sent to ${server.clients.length} clients`);
           break;
         }
+        case "l": {
+          console.log(`\nLoading shuffled questions file...`);
+          try {
+            await loadShuffledQuestions();
+            console.log(`Successfully loaded shuffled questions!`);
+          } catch (error) {
+            console.error(
+              `Failed to load shuffled questions: ${error.message}`
+            );
+          }
+          break;
+        }
+        case "f": {
+          console.log(`\nFetching questions from API...`);
+          try {
+            await manager.requestAllPlayerQuestions(
+              "oot",
+              "dezrando",
+              "admin123"
+            );
+            await loadShuffledQuestions();
+            console.log(`Successfully fetched and loaded questions!`);
+          } catch (error) {
+            console.error(`Failed to fetch questions: ${error.message}`);
+          }
+          break;
+        }
         case "q": {
           console.log("\nExiting key listener mode...");
           if (Deno.stdin.setRaw) {
@@ -752,6 +813,12 @@ async function setupKeyListener() {
           console.log("  'r' - Send DECREASE_HEALTH packet to all clients");
           console.log("  't' - Send INCREASE_HEALTH packet to all clients");
           console.log("  'i' - Send questions to all clients");
+          console.log(
+            "  'l' - Load shuffled questions from quiz-YYYY-MM-DD.json"
+          );
+          console.log("  'f' - Fetch questions from API and assign them");
+          console.log("  'q' - Quit key listener mode");
+          console.log("  'f' - Fetch questions from API and assign them");
           console.log("  'q' - Quit key listener mode");
           break;
         }
@@ -788,12 +855,41 @@ function sendIncreaseHealth(client: Client) {
 }
 
 function sendQuestions(client: Client) {
+  // Get the player name from client data
+  const playerName = client.data.name || client.data.playerName;
+
+  if (!playerName) {
+    console.log(`Client ${client.id} has no name, cannot assign questions`);
+    return client.sendPacket({
+      type: "RECEIVE_QUESTIONS",
+      message: JSON.stringify({ questionGame: { questions: [] } }),
+    });
+  }
+
+  // Check if we have shuffled assignments loaded
+  if (quizAssignments.size > 0 && quizAssignments.has(playerName)) {
+    const playerData = quizAssignments.get(playerName);
+    console.log(
+      `Sending ${playerData.questionGame.questions.length} shuffled questions to ${playerName} (client ${client.id})`
+    );
+    return client.sendPacket({
+      type: "RECEIVE_QUESTIONS",
+      message: JSON.stringify(playerData),
+    });
+  }
+
+  // Fallback to old method
   const questions = assignments.get("player-1")?.map((q) => q.question) || [];
   const playerData: PlayerData = {
     questionGame: {
       questions: assignments.get("player-1") || [],
     },
   };
+  console.log(
+    `Sending fallback questions to ${playerName || "unknown"} (client ${
+      client.id
+    })`
+  );
   return client.sendPacket({
     type: "RECEIVE_QUESTIONS",
     message: JSON.stringify(playerData),
