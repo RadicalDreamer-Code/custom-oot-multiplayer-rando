@@ -241,7 +241,7 @@ void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, f
 }
 
 void PunishmentManager::SpawnRandomEnemy() {
-    //enemyIndex = rand() % ENEMY_LIST.size();
+    enemyIndex = rand() % ENEMY_LIST.size();
     SpawnEnemy(ENEMY_LIST[enemyIndex].actorId, ENEMY_LIST[enemyIndex].params, ENEMY_LIST[enemyIndex].count,
                ENEMY_LIST[enemyIndex].spawnDistanceToLink);
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
