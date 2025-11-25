@@ -91,11 +91,12 @@ class QuestionManager {
     bool nextQuestion();
     bool previousQuestion();
     void reset();
+    size_t currentIndex = 0;
 
   private:
     QuestionManager() = default; // private constructor
     std::vector<Question> questions;
-    size_t currentIndex = 0;
+    
 };
 
 

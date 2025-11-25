@@ -31,6 +31,11 @@ void QuestionManager::OnQuestionAnswered(uint8_t option) {
     }
 
     // TODO: Let QuestionManager send response to server in order to punish all players
+    nlohmann::json payload;
+    payload["type"] = "QUIZ_STATE";
+    payload["lastQuestionIndex"] = QuestionManager::get().currentIndex;
+    payload["name"] = CVarGetString("gRemote.AnchorName", "");
+    GameInteractorAnchor::Instance->TransmitJsonToRemote(payload);
 
     QuestionManager::get().nextQuestion();
 }
@@ -720,6 +725,8 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
                     
                     QuestionManager::get().addQuestion(question);
                 }
+
+                QuestionManager::get().currentIndex = payload["lastQuestionIndex"];
                 
                 SPDLOG_INFO("[Anchor] Loaded {} questions from server", questionsArray.size());
                 Anchor_DisplayMessage({
