@@ -183,11 +183,9 @@ void EnPoSisters_Init(Actor* thisx, PlayState* play) {
 
     this->epoch++;
 
-    // Skip Poe Intro Cutscene
+    // Skip Poe Intro Cutscene   
     if (IS_RANDO && thisx->params == 4124 && !Randomizer_GetSettingValue(RSK_ENABLE_GLITCH_CUTSCENES)) {
-        // Edit: Not for custom params
-        if (&this->actor.params < 8 || &this->actor.params > 11)
-            Flags_SetSwitch(play, 0x1B);
+        Flags_SetSwitch(play, 0x1B);
         Actor_Kill(thisx);
     }
 
@@ -394,7 +392,9 @@ void func_80AD99D4(EnPoSisters* this, PlayState* play) {
     this->actor.flags &= ~ACTOR_FLAG_TARGETABLE;
     this->unk_199 = 0;
     this->actionFunc = func_80ADAFC0;
-    OnePointCutscene_Init(play, 3190, 999, &this->actor, MAIN_CAM);
+    // Edit: Not for custom params 8
+    if (this->actor.params != 8)
+        OnePointCutscene_Init(play, 3190, 999, &this->actor, MAIN_CAM);
 }
 
 void func_80AD9A54(EnPoSisters* this, PlayState* play) {
@@ -475,7 +475,9 @@ void func_80AD9DF0(EnPoSisters* this, PlayState* play) {
     this->unk_198 = 1;
     this->unk_199 &= ~0x80;
     this->actionFunc = func_80ADB4B0;
-    OnePointCutscene_Init(play, 3180, 156, &this->actor, MAIN_CAM);
+    // Edit: Not for custom params 8
+    if (this->actor.params != 8)
+        OnePointCutscene_Init(play, 3180, 156, &this->actor, MAIN_CAM);
 }
 
 void func_80AD9E60(EnPoSisters* this) {
@@ -1062,7 +1064,9 @@ void func_80ADBC88(EnPoSisters* this, PlayState* play) {
         }
         if (this->unk_19A == 30) {
             if (this->unk_194 == 0) {
-                OnePointCutscene_Init(play, 3140, 999, NULL, MAIN_CAM);
+                // Edit: Not for custom params 8
+                if (this->actor.params != 8)
+                    OnePointCutscene_Init(play, 3140, 999, NULL, MAIN_CAM);
             }
             D_80ADD784 = 1;
         }

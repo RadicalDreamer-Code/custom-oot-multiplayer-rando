@@ -38,7 +38,7 @@ struct EnemySpawnInfo {
 static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     // https : // zeldamodding.net/zelda-oot-enemy-actor-list/
     // Actor IDs: https://wiki.cloudmodding.com/oot/Actor_List_(Variables)
-    // { ACTOR_EN_PO_SISTERS, 8 }, // Purple Poe Forest Temple Mini Boss, bekomme die Cutscene leider nicht disabled
+    { ACTOR_EN_PO_SISTERS, 8 },  // Purple Poe Forest Temple Mini Boss
     { ACTOR_EN_NY, 0, 3 },       // Spike
     { ACTOR_EN_SB, 0, 3 },       // Shellblade / Muschel
     { ACTOR_EN_CLEAR_TAG, 1 , 3},// Arwing
@@ -241,7 +241,7 @@ void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, f
 }
 
 void PunishmentManager::SpawnRandomEnemy() {
-    enemyIndex = rand() % ENEMY_LIST.size();
+    //enemyIndex = rand() % ENEMY_LIST.size();
     SpawnEnemy(ENEMY_LIST[enemyIndex].actorId, ENEMY_LIST[enemyIndex].params, ENEMY_LIST[enemyIndex].count,
                ENEMY_LIST[enemyIndex].spawnDistanceToLink);
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
