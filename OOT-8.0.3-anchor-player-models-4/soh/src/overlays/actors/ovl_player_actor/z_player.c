@@ -6654,12 +6654,9 @@ s32 func_8083E5A8(Player* this, PlayState* play) {
         gSaveContext.sohStats.count[COUNT_ICE_TRAPS]++;
         printf("EISFALLE");
 
-        // Open quiz after item was given and all animations and text boxes are done
-        if (IS_RANDO && Message_GetState(&play->msgCtx) == TEXT_STATE_NONE && !Player_InCsMode(play)) {
-            Player* player = GET_PLAYER(play);
-            player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
-            Message_StartTextbox(play, 0x90FD, &player->actor);
-            quizWasTriggered = 1;
+        // Sets ice trap flag from Header1 to trigger the quiz later inside z_play.c
+        if (IS_RANDO) {
+            //iceTrapWasTriggered = 1;
         }
 
         return 1;

@@ -10,10 +10,23 @@
 #include <soh/Enhancements/randomizer/randomizer_check_tracker.h>
 #include <soh/util.h>
 #include "soh/Enhancements/game-interactor/GameInteractor_Anchor.h"
+#include "soh/Enhancements/punishments/Header1.h"
+extern "C" {
+#include <z64.h>
+#include "macros.h"
+#include "functions.h"
+#include "variables.h"
+}
+
 
 u32 enemyIndex = 0;
+u8 iceTrapWasTriggered = 0;
+u8 quizWasTriggered = 0;
+uint32_t lastIceTrapCount = 0;
+bool ignoreNextIceTrapUpdate = true;
 
 static std::vector<int16_t> sDiscoveredEntrances;
+static std::deque<PunishmentType> sPendingPunishments;
 
 struct EnemySpawnInfo {
     ActorID actorId;
@@ -25,7 +38,7 @@ struct EnemySpawnInfo {
 static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     // https : // zeldamodding.net/zelda-oot-enemy-actor-list/
     // Actor IDs: https://wiki.cloudmodding.com/oot/Actor_List_(Variables)
-    { ACTOR_EN_PO_SISTERS, 8 },  // Purple Poe Forest Temple Mini Boss
+    // { ACTOR_EN_PO_SISTERS, 8 }, // Purple Poe Forest Temple Mini Boss, bekomme die Cutscene leider nicht disabled
     { ACTOR_EN_NY, 0, 3 },       // Spike
     { ACTOR_EN_SB, 0, 3 },       // Shellblade / Muschel
     { ACTOR_EN_CLEAR_TAG, 1 , 3},// Arwing
@@ -82,6 +95,69 @@ static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     // { ACTOR_EN_VM, 1, 2 }     // Beamos und Big Beamos greigen nicht an: TODO Custom Param
 };
 
+static bool IsPlayerControllable(bool includeInputBlock = true) {
+    if (!GameInteractor::IsSaveLoaded() || gPlayState == nullptr) {
+        return false;
+    }
+    Player* player = GET_PLAYER(gPlayState);
+    if (player == nullptr) {
+        return false;
+    }
+    if (GameInteractor::IsGameplayPaused()) {
+        return false;
+    }
+    if (gPlayState->transitionTrigger != TRANS_TRIGGER_OFF) {
+        return false;
+    }
+    if (gPlayState->transitionMode != 0) {
+        return false;
+    }
+    if (gPlayState->csCtx.state != CS_STATE_IDLE) {
+        return false;
+    }
+    if (gPlayState->shootingGalleryStatus != 0) {
+        return false;
+    }
+    if (Player_InBlockingCsMode(gPlayState, player)) {
+        return false;
+    }
+    if (includeInputBlock && player->stateFlags1 & PLAYER_STATE1_INPUT_DISABLED) {
+        return false;
+    }
+    if (player->stateFlags3 & PLAYER_STATE3_PAUSE_ACTION_FUNC) {
+        return false;
+    }
+    if (player->stateFlags2 & PLAYER_STATE2_FROZEN) {
+        return false;
+    }
+    if (player->stateFlags1 & PLAYER_STATE1_DEAD) {
+        return false;
+    }
+    if (player->stateFlags2 & PLAYER_STATE2_GRABBED_BY_ENEMY) {
+        return false;
+    }
+    if (player->stateFlags2 & PLAYER_STATE2_OCARINA_PLAYING) {
+        return false;
+    }
+    if (player->invincibilityTimer > 0) {
+        return false;
+    }
+    /* if (player->stateFlags1 & PLAYER_STATE1_HANGING_OFF_LEDGE) {
+        return false;
+    }
+    if (player->stateFlags1 & PLAYER_STATE1_CLIMBING_LADDER) {
+        return false;
+    }
+    if (player->stateFlags1 & PLAYER_STATE1_CLIMBING_LEDGE) {
+        return false;
+    }
+    if (player->stateFlags1 & PLAYER_STATE1_JUMPING) {
+        return false;
+    } */
+
+    return true;
+}
+
 // Nach betreten jeder Loading Zone den Ort in die Liste eintragen, wenn er noch nicht drin steht
 void RegisterDiscoveredEntrancesTracker() {
     GameInteractor::Instance->RegisterGameHook<GameInteractor::OnTransitionEnd>([](int32_t sceneNum) {
@@ -89,11 +165,58 @@ void RegisterDiscoveredEntrancesTracker() {
             return;
         }
          Entrance_SetCustomEntranceDiscovered(gSaveContext.entranceIndex, false);
-         //int16_t entrance = gSaveContext.entranceIndex;
-         /* if (std::find(sDiscoveredEntrances.begin(), sDiscoveredEntrances.end(), entrance) ==
-            sDiscoveredEntrances.end()) {
-            sDiscoveredEntrances.push_back(entrance);
-        }*/
+    });
+}
+
+void RegisterPunishmentQueueExecution() {
+    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnPlayerUpdate>([]() {
+        if (sPendingPunishments.empty()) {
+            return;
+        }
+        if (!IsPlayerControllable()) {
+            return;
+        }
+        PunishmentType punishment = sPendingPunishments.front();
+        sPendingPunishments.pop_front();
+        PunishmentManager::ExecutePunishment(punishment);
+    });
+}
+
+void RegisterQuizCallbacks() {
+    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnPlayerUpdate>([]() {
+
+        Player* player = GET_PLAYER(gPlayState);
+        Input* input = &gPlayState->state.input[0];
+
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_DUP) && !quizWasTriggered) {
+            // Nur für Debug Zwecke. Später auskommentieren
+            iceTrapWasTriggered = 1;
+        } 
+
+        auto currentIceTrapCount = gSaveContext.sohStats.count[COUNT_ICE_TRAPS];
+        if (currentIceTrapCount > lastIceTrapCount) {
+            lastIceTrapCount = currentIceTrapCount;
+            if (ignoreNextIceTrapUpdate) {
+                ignoreNextIceTrapUpdate = false;
+            } else {
+                iceTrapWasTriggered = 1;
+            }
+        }
+
+        if (IS_RANDO && quizWasTriggered && gPlayState->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(gPlayState)) {
+            u8 option = gPlayState->msgCtx.choiceIndex;
+            player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
+            Message_Answered(option);
+            quizWasTriggered = 0;
+        }
+
+        if (IS_RANDO && !quizWasTriggered && iceTrapWasTriggered &&
+            Message_GetState(&gPlayState->msgCtx) == TEXT_STATE_NONE && IsPlayerControllable(true)) {
+            player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
+            Message_StartTextbox(gPlayState, 0x90FD, &player->actor);
+            iceTrapWasTriggered = 0;
+            quizWasTriggered = 1;
+        }
     });
 }
 
@@ -151,6 +274,11 @@ PunishmentType PunishmentManager::GetPunishmentByValue(int8_t punishmentValue) {
 
 void PunishmentManager::ExecutePunishment(PunishmentType punishment) {
     // TODO: have multiple types
+
+     if (!IsPlayerControllable()) {
+        sPendingPunishments.push_back(punishment);
+        return;
+    }
 
     switch (punishment) { 
         case PunishmentType::SpawnRandomEnemy:
@@ -230,4 +358,7 @@ PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::SpawnRand
 
 void PunishmentManager::InitPunishmentManager() {
     RegisterDiscoveredEntrancesTracker();
+    RegisterPunishmentQueueExecution();
+    RegisterQuizCallbacks();
+    lastIceTrapCount = gSaveContext.sohStats.count[COUNT_ICE_TRAPS];
 }

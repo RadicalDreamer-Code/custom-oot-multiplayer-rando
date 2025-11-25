@@ -40,7 +40,6 @@ s16 firstInit = 0;
 
 s16 gEnPartnerId;
 s16 gEnLinkPuppetId;
-u8 quizWasTriggered = 0;
 
 void OTRPlay_SpawnScene(PlayState* play, s32 sceneNum, s32 spawn);
 
@@ -814,46 +813,10 @@ void Play_Update(PlayState* play) {
     gSegments[5] = VIRTUAL_TO_PHYSICAL(play->objectCtx.status[play->objectCtx.subKeepIndex].segment);
     gSegments[2] = VIRTUAL_TO_PHYSICAL(play->sceneSegment);
 
-
-    // Callbacks für Auswahldialog, wenn er mit Z getriggert wurde. Nur für Testzwecke und kann hier später weg
-
-    if (quizWasTriggered && play->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(play)) {
-        u8 option = play->msgCtx.choiceIndex;
-
-        if (option == 0) {
-            printf("OPTION 1");
-        } else if (option == 1) {
-            printf("OPTION 2");
-        } else if (option == 2) {
-            printf("OPTION 3");
-        } 
-        Player* player = GET_PLAYER(play);
-        player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
-        Message_Answered(option);
-        quizWasTriggered = 0;
-    }
-
     if (FrameAdvance_Update(&play->frameAdvCtx, &input[1])) {
         if ((play->transitionMode == TRANS_MODE_OFF) && (play->transitionTrigger != TRANS_TRIGGER_OFF)) {
             play->transitionMode = TRANS_MODE_SETUP;
         }
-
-        //TEST-TEST-TEST:
-        if (CHECK_BTN_ALL(input[0].press.button, BTN_CUP) && !quizWasTriggered) {
-            //Play_TriggerRespawn(play);
-            //GetItemEntry getItemEntry = ItemTable_Retrieve(GI_ICE_TRAP);
-            //GiveItemEntryWithoutActor(gPlayState, getItemEntry);
-            //Player_InBlockingCsMode(play, GET_PLAYER(play));
-
-
-            // Quizdialog mit C UP aufrufen. Falls nicht auskommentiert, dürfen auch die Callbacks oben nicht auskommentiert werden, sonst bleibt der Input geblockt
-
-            Player* player = GET_PLAYER(play);
-            player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
-            Message_StartTextbox(play, 0x90FD, &player->actor);
-            quizWasTriggered = 1;
-        }
-
 
         // Gameplay stats: Count button presses
         if (!gSaveContext.sohStats.gameComplete) {
