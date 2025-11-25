@@ -10,13 +10,15 @@
 #include <soh/Enhancements/randomizer/randomizer_check_tracker.h>
 #include <soh/util.h>
 
-enum class PunishmentType { None, SpawnRandomEnemy, TeleportToRandomDiscoveredLocation };
+enum class PunishmentType { SpawnRandomEnemy, TeleportToRandomDiscoveredLocation };
 
 class PunishmentManager {
   public:
     static void SpawnEnemy(ActorID actorId, int16_t params = 0, int count = 1, float spawnDistanceToLink = 70);
     static void SpawnRandomEnemy();
-    static void ExecuteRandomPunishment();
+    static PunishmentType GetRandomPunishment();
+    static PunishmentType GetPunishmentByValue(int8_t punishmentValue);
+    static void ExecutePunishment(PunishmentType punishment);
     static void TeleportPlayerToEntrance(int16_t entranceIndex);
     static void TeleportPlayerToRandomDiscoveredLocation();
     static void InitPunishmentManager();

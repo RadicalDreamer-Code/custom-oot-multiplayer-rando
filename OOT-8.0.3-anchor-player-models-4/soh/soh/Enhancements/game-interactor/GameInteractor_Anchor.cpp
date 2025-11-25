@@ -21,7 +21,8 @@ void QuestionManager::OnQuestionAnswered(uint8_t option) {
         Audio_PlaySoundGeneral(NA_SE_EV_SMALL_DOG_BARK, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
     } else {
         Audio_PlaySoundGeneral(NA_SE_EN_GANON_LAUGH, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
-        PunishmentManager::ExecuteRandomPunishment();
+        auto punishment = PunishmentManager::GetRandomPunishment();
+        PunishmentManager::ExecutePunishment(punishment);
         // Signal Server to execute the punishment on all clients
         nlohmann::json payload;
         payload["type"] = "SIGNAL_PUNISHMENT";
@@ -742,7 +743,8 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
         auto data = payload["data"];
         auto clientId = payload["clientId"];
         //TODO: Handle different type of punishments
-        PunishmentManager::ExecuteRandomPunishment();
+        auto value = PunishmentManager::GetPunishmentByValue(data);
+        PunishmentManager::ExecutePunishment(value);
     }
 
 }

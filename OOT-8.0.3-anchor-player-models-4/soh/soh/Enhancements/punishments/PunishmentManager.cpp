@@ -124,7 +124,8 @@ void PunishmentManager::SpawnRandomEnemy() {
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
 }
 
-static PunishmentType GetRandomPunishment() {
+/*
+PunishmentType PunishmentManager::GetRandomPunishment() {
     // Liste aller erlaubten Werte (ohne None)
     static const PunishmentType punishments[] = { PunishmentType::SpawnRandomEnemy,
                                                   PunishmentType::TeleportToRandomDiscoveredLocation };
@@ -134,12 +135,23 @@ static PunishmentType GetRandomPunishment() {
 
     return punishments[index];
 }
+*/
 
-void PunishmentManager::ExecuteRandomPunishment() {
+PunishmentType PunishmentManager::GetRandomPunishment() {
+    // CAREFUL: max muss der letzte enum entry sein
+    int max = static_cast<int>(PunishmentType::TeleportToRandomDiscoveredLocation);
+    return static_cast<PunishmentType>(rand() % (max + 1));
+}
+
+
+// TODO: Maybe not necessery
+PunishmentType PunishmentManager::GetPunishmentByValue(int8_t punishmentValue) {
+    return static_cast<PunishmentType>(punishmentValue);
+}
+
+void PunishmentManager::ExecutePunishment(PunishmentType punishment) {
     // TODO: have multiple types
 
-    PunishmentType punishment = GetRandomPunishment();
-   
     switch (punishment) { 
         case PunishmentType::SpawnRandomEnemy:
             SpawnRandomEnemy();
@@ -214,7 +226,7 @@ void PunishmentManager::TeleportPlayerToRandomDiscoveredLocation() {
     TeleportPlayerToEntrance(entrance);
 }
 
-PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::None;
+PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::SpawnRandomEnemy;
 
 void PunishmentManager::InitPunishmentManager() {
     RegisterDiscoveredEntrancesTracker();
