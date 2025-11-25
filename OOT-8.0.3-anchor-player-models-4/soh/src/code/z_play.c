@@ -14,6 +14,7 @@
 #include <overlays/misc/ovl_kaleido_scope/z_kaleido_scope.h>
 #include "soh/Enhancements/enhancementTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
+#include "soh/Enhancements/punishments/Header1.h";
 
 #include <libultraship/libultraship.h>
 
@@ -39,7 +40,7 @@ s16 firstInit = 0;
 
 s16 gEnPartnerId;
 s16 gEnLinkPuppetId;
-u8 quizWasTriggeredWithZ = 0;
+u8 quizWasTriggered = 0;
 
 void OTRPlay_SpawnScene(PlayState* play, s32 sceneNum, s32 spawn);
 
@@ -816,7 +817,7 @@ void Play_Update(PlayState* play) {
 
     // Callbacks für Auswahldialog, wenn er mit Z getriggert wurde. Nur für Testzwecke und kann hier später weg
 
-    if (quizWasTriggeredWithZ && play->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(play)) {
+    if (quizWasTriggered && play->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(play)) {
         u8 option = play->msgCtx.choiceIndex;
 
         if (option == 0) {
@@ -829,7 +830,7 @@ void Play_Update(PlayState* play) {
         Player* player = GET_PLAYER(play);
         player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
         Message_Answered(option);
-        quizWasTriggeredWithZ = 0;
+        quizWasTriggered = 0;
     }
 
     if (FrameAdvance_Update(&play->frameAdvCtx, &input[1])) {
@@ -838,7 +839,7 @@ void Play_Update(PlayState* play) {
         }
 
         //TEST-TEST-TEST:
-        if (CHECK_BTN_ALL(input[0].press.button, BTN_CUP) && !quizWasTriggeredWithZ) {
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_CUP) && !quizWasTriggered) {
             //Play_TriggerRespawn(play);
             //GetItemEntry getItemEntry = ItemTable_Retrieve(GI_ICE_TRAP);
             //GiveItemEntryWithoutActor(gPlayState, getItemEntry);
@@ -850,7 +851,7 @@ void Play_Update(PlayState* play) {
             Player* player = GET_PLAYER(play);
             player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
             Message_StartTextbox(play, 0x90FD, &player->actor);
-            quizWasTriggeredWithZ = 1;
+            quizWasTriggered = 1;
         }
 
 

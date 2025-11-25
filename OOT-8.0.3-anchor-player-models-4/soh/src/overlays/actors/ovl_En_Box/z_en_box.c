@@ -90,8 +90,6 @@ Gfx gChristmasGreenTreasureChestChestFrontDL[128] = {0};
 u8 hasCreatedRandoChestTextures = 0;
 u8 hasCustomChestDLs = 0;
 u8 hasChristmasChestTexturesAvailable = 0;
-u8 boxIsOpen = 0;
-u8 quizWasTriggered = 0;
 
 void EnBox_SetupAction(EnBox* this, EnBoxActionFunc actionFunc) {
     this->actionFunc = actionFunc;
@@ -550,8 +548,6 @@ void EnBox_Open(EnBox* this, PlayState* play) {
         if (Animation_OnFrame(&this->skelanime, 30.0f)) {
             sfxId = NA_SE_EV_TBOX_UNLOCK;
             gSaveContext.sohStats.count[COUNT_CHESTS_OPENED]++;
-            // Signalisiert, dass die Truhe geöffnet wurde, wenn es eine Icetrap ist
-            if (IS_RANDO && ABS(sItem.getItemId) == RG_ICE_TRAP) boxIsOpen = 1;
         } else if (Animation_OnFrame(&this->skelanime, 90.0f)) {
             sfxId = NA_SE_EV_TBOX_OPEN;
         }
@@ -636,34 +632,6 @@ void EnBox_Update(Actor* thisx, PlayState* play) {
         if (!CVarGetInteger("gAddTraps.enabled", 0)) {
             EnBox_SpawnIceSmoke(this, play);
         }
-    }
-
-    // Open quiz after item was given and all animations and text boxes are done
-    if (boxIsOpen && IS_RANDO && ABS(sItem.getItemId) == RG_ICE_TRAP &&
-             Message_GetState(&play->msgCtx) == TEXT_STATE_NONE &&
-        !Player_InCsMode(play)) {
-        boxIsOpen = 0;
-        Player* player = GET_PLAYER(play);
-        player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
-        Message_StartTextbox(play, 0x90FD, &player->actor);
-        quizWasTriggered = 1;
-    }
-
-    // Quiz options callbacks
-    if (quizWasTriggered && play->msgCtx.msgMode == MSGMODE_TEXT_DONE && Message_ShouldAdvance(play)) {
-        u8 option = play->msgCtx.choiceIndex;
-
-        if (option == 0) {
-            printf("OPTION 1");
-        } else if (option == 1) {
-            printf("OPTION 2");
-        } else if (option == 2) {
-            printf("OPTION 3");
-        }
-        Player* player = GET_PLAYER(play);
-        player->stateFlags1 &= ~PLAYER_STATE1_INPUT_DISABLED;
-        quizWasTriggered = 0;
-        Message_Answered(option);
     }
 }
 

@@ -32,6 +32,7 @@
 #include "soh/frame_interpolation.h"
 #ifdef ENABLE_REMOTE_CONTROL
 #include "soh/Enhancements/game-interactor/GameInteractor_Anchor.h"
+#include "soh/Enhancements/punishments/Header1.h";
 #endif
 
 #include <string.h>
@@ -6651,6 +6652,16 @@ s32 func_8083E5A8(Player* this, PlayState* play) {
         this->getItemEntry = (GetItemEntry) GET_ITEM_NONE;
         // Gameplay stats: Increment Ice Trap count
         gSaveContext.sohStats.count[COUNT_ICE_TRAPS]++;
+        printf("EISFALLE");
+
+        // Open quiz after item was given and all animations and text boxes are done
+        if (IS_RANDO && Message_GetState(&play->msgCtx) == TEXT_STATE_NONE && !Player_InCsMode(play)) {
+            Player* player = GET_PLAYER(play);
+            player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
+            Message_StartTextbox(play, 0x90FD, &player->actor);
+            quizWasTriggered = 1;
+        }
+
         return 1;
     }
 
