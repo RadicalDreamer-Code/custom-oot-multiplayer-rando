@@ -208,6 +208,7 @@ class Server {
   private listener?: Deno.Listener;
   public clients: Client[] = [];
   public rooms: Room[] = [];
+  public nextClientId: number = 1;
   public stats: ServerStats = {
     lastStatsHeartbeat: Date.now(),
     clientSHAs: {},
@@ -346,7 +347,9 @@ class Client {
   constructor(connection: Deno.Conn, server: Server) {
     this.connection = connection;
     this.server = server;
-    this.id = connection.rid;
+    // obsolete on deno 2.0+
+    // this.id = connection.rid;
+    this.id = server.nextClientId++;
 
     // SHA256 to get a rough idea of how many unique players there are
     crypto.subtle
