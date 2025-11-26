@@ -289,7 +289,8 @@ class Server {
 
     this.log(`Server Started on port ${port}`);
     // var datestring = getCurrentTime();
-    await createFile(currentTime + ".txt", "Initial content.\n");
+    var filename = "logs/" + currentTime + ".txt";
+    await createFile(filename, "Initial content.\n");
     quizState = await loadQuizState();
     try {
       for await (const connection of this.listener) {
