@@ -745,6 +745,16 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
         //TODO: Handle different type of punishments
         auto value = PunishmentManager::GetPunishmentByValue(data);
         PunishmentManager::ExecutePunishment(value);
+
+        // get player who has failed the question
+        AnchorClient anchorClient = GameInteractorAnchor::AnchorClients[payload["clientId"].get<uint32_t>()];
+
+        Anchor_DisplayMessage({
+            .prefix = anchorClient.name,
+            .prefixColor = ImVec4(1.0f, 0.5f, 0.5f, 1.0f),
+            .message = " hat die Frage gefailed.",
+            // .suffix = anchorClient.name
+        });
     }
 
 }
