@@ -451,7 +451,7 @@ class Client {
       if (packetObject.type === "SIGNAL_PUNISHMENT") {
         console.log("SIGNAL_PUNISHMENT packet received");
         console.log(packetObject);
-        this.room.broadcastPacket(packetObject, this);
+        //this.room.broadcastPacket(packetObject, this);
       }
 
       if (packetObject.type === "QUIZ_STATE") {

@@ -26,7 +26,7 @@ void QuestionManager::OnQuestionAnswered(uint8_t option) {
         // Signal Server to execute the punishment on all clients
         nlohmann::json payload;
         payload["type"] = "SIGNAL_PUNISHMENT";
-        payload["data"] = PunishmentManager::lastPunishmentType;
+        payload["data"] = punishment;
         GameInteractorAnchor::Instance->TransmitJsonToRemote(payload);
 
     }
