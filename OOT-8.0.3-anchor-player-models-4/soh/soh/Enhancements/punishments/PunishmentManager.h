@@ -10,7 +10,7 @@
 #include <soh/Enhancements/randomizer/randomizer_check_tracker.h>
 #include <soh/util.h>
 
-enum class PunishmentType { SpawnRandomEnemy, TeleportToRandomDiscoveredLocation };
+enum class PunishmentType { SpawnRandomEnemy, TeleportToRandomDiscoveredLocation, DecreaseHealth };
 
 class PunishmentManager {
   public:
@@ -21,6 +21,8 @@ class PunishmentManager {
     static void ExecutePunishment(PunishmentType punishment);
     static void TeleportPlayerToEntrance(int16_t entranceIndex);
     static void TeleportPlayerToRandomDiscoveredLocation();
+    static void DecreaseHealth();
+    static void IncreaseHealth();
     static void InitPunishmentManager();
     static PunishmentType lastPunishmentType;
 };

@@ -757,6 +757,14 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
         });
     }
 
+    if (payload["type"] == "DECREASE_HEALTH") {
+        PunishmentManager::DecreaseHealth();  
+    }
+
+    if (payload["type"] == "INCREASE_HEALTH") {
+        PunishmentManager::IncreaseHealth();
+    }
+
 }
 
 void Anchor_PushSaveStateToRemote() {

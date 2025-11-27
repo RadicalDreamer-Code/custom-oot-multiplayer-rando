@@ -262,7 +262,7 @@ PunishmentType PunishmentManager::GetRandomPunishment() {
 
 PunishmentType PunishmentManager::GetRandomPunishment() {
     // CAREFUL: max muss der letzte enum entry sein
-    int max = static_cast<int>(PunishmentType::TeleportToRandomDiscoveredLocation);
+    int max = static_cast<int>(PunishmentType::DecreaseHealth);
     return static_cast<PunishmentType>(rand() % (max + 1));
 }
 
@@ -286,6 +286,9 @@ void PunishmentManager::ExecutePunishment(PunishmentType punishment) {
             break;
         case PunishmentType::TeleportToRandomDiscoveredLocation:
             TeleportPlayerToRandomDiscoveredLocation();
+            break;
+        case PunishmentType::DecreaseHealth:
+            DecreaseHealth();
             break;
         default:
             break;
@@ -349,9 +352,41 @@ void PunishmentManager::TeleportPlayerToRandomDiscoveredLocation() {
     int16_t entrance = GetRandomDiscoveredEntrance();
     if (entrance < 0) {
         printf("Keine bekannten Orte zum Teleportieren!");
+        ExecutePunishment(PunishmentType::SpawnRandomEnemy);
         return;
     }
     TeleportPlayerToEntrance(entrance);
+}
+
+void PunishmentManager::DecreaseHealth() {
+    if (gSaveContext.healthCapacity <= 32) {
+        printf("Health kann nicht weniger als 2 Herzen sein!");
+        ExecutePunishment(PunishmentType::SpawnRandomEnemy);
+        return;
+    }
+
+    gSaveContext.healthCapacity -= 0x10;
+    if (gSaveContext.health > gSaveContext.healthCapacity) {
+        gSaveContext.health = gSaveContext.healthCapacity;
+    }
+
+    // Sound Effekt bei Max Health Decrease
+    GameInteractor::RawAction::KnockbackPlayer(0);
+    Audio_PlaySoundGeneral(NA_SE_EN_PO_LAUGH, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+
+    // Visueller Effekt bei Max Health Decrease
+    Player* player = GET_PLAYER(gPlayState);
+    Vec3f vec;
+    vec.x = player->actor.world.pos.x;
+    vec.y = player->actor.world.pos.y + 45.0f;
+    vec.z = player->actor.world.pos.z;
+    Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
+    EffectSsDeadDb_Spawn(gPlayState, &vec, &zeroVec, &zeroVec, 150, 0, 120, 0, 200, 200, 30, 0, 80, 1, 9, 0);
+}
+
+void PunishmentManager::IncreaseHealth() {
+    gSaveContext.healthCapacity += 0x10;
+    gSaveContext.health += 0x10;
 }
 
 PunishmentType PunishmentManager::lastPunishmentType = PunishmentType::SpawnRandomEnemy;
