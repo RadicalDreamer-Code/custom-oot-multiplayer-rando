@@ -210,7 +210,7 @@ void RegisterQuizCallbacks() {
             quizWasTriggered = 0;
         }
 
-        if (IS_RANDO && !quizWasTriggered && iceTrapWasTriggered &&
+        if (IS_RANDO && (quizWasTriggered || iceTrapWasTriggered) &&
             Message_GetState(&gPlayState->msgCtx) == TEXT_STATE_NONE && IsPlayerControllable(true)) {
             player->stateFlags1 |= PLAYER_STATE1_INPUT_DISABLED;
             Message_StartTextbox(gPlayState, 0x90FD, &player->actor);
