@@ -30,4 +30,6 @@ Press the following keys in key listener mode:
 - `r` - Send DECREASE_HEALTH packet to all clients
 - `t` - Send INCREASE_HEALTH packet to all clients
 - `i` - Send questions to all clients
+- `l` - Load shuffled questions from quiz-YYYY-MM-DD.json
+- `f` - Fetch questions from API and assign them (combines fetch + load)
 - `q` - Quit key listener mode
