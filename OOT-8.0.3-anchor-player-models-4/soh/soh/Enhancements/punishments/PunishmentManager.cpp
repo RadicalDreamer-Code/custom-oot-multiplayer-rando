@@ -20,6 +20,7 @@ extern "C" {
 
 
 u32 enemyIndex = 0;
+u32 itemIndex = 0;
 u8 iceTrapWasTriggered = 0;
 u8 quizWasTriggered = 0;
 uint32_t lastIceTrapCount = 0;
@@ -30,14 +31,15 @@ int playBubleSound = 0;
 static std::vector<int16_t> sDiscoveredEntrances;
 static std::deque<PunishmentType> sPendingPunishments;
 
-struct EnemySpawnInfo {
-    ActorID actorId;
+struct ActorSpawnInfo {
+    int16_t actorId;
     s16 params = 0; // Wird oft benötigt, um den Gegner korrekt zu spawnen oder manchmal für verschiedene Gegner Varianten. Im jeweiligen Header des Actors findet man da oft Infos zu, sonst im .c Skript des Actors nach actor.params suchen.
     int count = 1; // Wie oft der Gegner gespawnt werden soll
     int spawnDistanceToLink = 70; // Abstand zu Link beim Spawn
+    bool isCollectable = false; // Muss true sein, wenn man collectable Items wie Rubine oder Herzen spawnen will etc.
 };
 
-static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
+static const std::vector<ActorSpawnInfo> ENEMY_LIST = {
     // https : // zeldamodding.net/zelda-oot-enemy-actor-list/
     // Actor IDs: https://wiki.cloudmodding.com/oot/Actor_List_(Variables)
     { ACTOR_EN_PO_SISTERS, 8 },  // Purple Poe Forest Temple Mini Boss
@@ -95,6 +97,12 @@ static const std::vector<EnemySpawnInfo> ENEMY_LIST = {
     // { ACTOR_EN_REEBA, 0 },    // Leever braucht Sand Surface type TODO: Custom param für any surface
     // { ACTOR_EN_REEBA, 1 },    // Leever big braucht Sand Surface type TODO: Custom param für any surface
     // { ACTOR_EN_VM, 1, 2 }     // Beamos und Big Beamos greigen nicht an: TODO Custom Param
+};
+
+static const std::vector<ActorSpawnInfo> ITEM_LIST = { 
+    { ACTOR_ITEM_B_HEART, 8, 1, 0 },
+    { ITEM00_RUPEE_PURPLE, 0, 10, 50, true },
+    { ITEM00_HEART, 0, 20, 50, true }
 };
 
 static bool IsPlayerControllable(bool includeInputBlock = true) {
@@ -261,31 +269,49 @@ void RegisterSwordDisablingHandler() {
     });
 }
 
-void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, float spawnDistanceToLink) {
+void PunishmentManager::SpawnActor(int16_t actorId, int16_t params, int count, float spawnDistanceToLink, bool isCollectable) {
     Player* player = GET_PLAYER(gPlayState);
-        player->invincibilityTimer = 60; // Invincibility, damit man nicht instant nach dem Spawn gedamaged wird
+        //player->invincibilityTimer = 60; // Invincibility, damit man nicht instant nach dem Spawn gedamaged wird
     for (int i = 0; i < count; i++) {
-        // Gegner werden gleichmäßig um Link herum aufgestellt, wenn es mehrere sind
+        // Actor werden gleichmäßig um Link herum aufgestellt, wenn es mehrere sind
         int rotationOffset = 0x8000;
         if (count == 2) rotationOffset = 0x4000;
         s16 yaw = player->actor.shape.rot.y + rotationOffset + i * (0x10000 / count);
         f32 offsetX = Math_SinS(yaw) * spawnDistanceToLink;
         f32 offsetZ = Math_CosS(yaw) * spawnDistanceToLink;
-        // Gegner schaut in Links Richtung
+        // Actor schaut in Links Richtung
+        Vec3f_ position;
+        position.x = player->actor.world.pos.x + offsetX;
+        position.y = player->actor.world.pos.y;
+        position.z = player->actor.world.pos.z + offsetZ;
         s16 enemyRotY = yaw + 0x8000;
-        Actor_Spawn(&gPlayState->actorCtx, gPlayState, actorId, player->actor.world.pos.x + offsetX,
-                    player->actor.world.pos.y, player->actor.world.pos.z + offsetZ, 0, enemyRotY, 0, params, 0);
+        if (isCollectable) {
+            if (actorId == ITEM00_HEART && gSaveContext.healthCapacity == gSaveContext.health) {   
+                Item_DropCollectibleRandom(gPlayState, &player->actor, &position, 0x80);
+            } else {
+                Item_DropCollectible(gPlayState, &position, actorId);
+            }
+        } else {
+            Actor_Spawn(&gPlayState->actorCtx, gPlayState, actorId, position.x, position.y, position.z, 0, enemyRotY, 0, params, 0);
+        }    
         if (actorId == ACTOR_EN_DH) {
-            SpawnEnemy(ACTOR_EN_DHA, 0, 4);
+            SpawnActor(ACTOR_EN_DHA, 0, 4);
         }
     }
 }
 
 void PunishmentManager::SpawnRandomEnemy() {
     enemyIndex = rand() % ENEMY_LIST.size();
-    SpawnEnemy(ENEMY_LIST[enemyIndex].actorId, ENEMY_LIST[enemyIndex].params, ENEMY_LIST[enemyIndex].count,
+    SpawnActor(ENEMY_LIST[enemyIndex].actorId, ENEMY_LIST[enemyIndex].params, ENEMY_LIST[enemyIndex].count,
                ENEMY_LIST[enemyIndex].spawnDistanceToLink);
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
+}
+
+void PunishmentManager::SpawnRandomItem() {
+    itemIndex = rand() % ITEM_LIST.size();
+    SpawnActor(ITEM_LIST[itemIndex].actorId, ITEM_LIST[itemIndex].params, ITEM_LIST[itemIndex].count,
+               ITEM_LIST[itemIndex].spawnDistanceToLink, ITEM_LIST[itemIndex].isCollectable);
+    // itemIndex = (itemIndex + 1) % ITEM_LIST.size();
 }
 
 /*

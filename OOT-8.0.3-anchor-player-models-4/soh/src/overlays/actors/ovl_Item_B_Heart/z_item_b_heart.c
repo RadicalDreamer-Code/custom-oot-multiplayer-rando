@@ -63,13 +63,15 @@ void ItemBHeart_Update(Actor* thisx, PlayState* play) {
     func_80B85264(this, play);
     Actor_UpdateBgCheckInfo(play, &this->actor, 0.0f, 0.0f, 0.0f, 4);
     if (Actor_HasParent(&this->actor, play)) {
-        Flags_SetCollectible(play, 0x1F);
+        // Edit: Don't set flag for custom params 8
+        if (this->actor.params != 8) Flags_SetCollectible(play, 0x1F);
         Actor_Kill(&this->actor);
     } else {
         if (!IS_RANDO) {
             func_8002F434(&this->actor, play, GI_HEART_CONTAINER_2, 30.0f, 40.0f);
-        } else {
-            GetItemEntry getItemEntry = Randomizer_GetItemFromActor(this->actor.id, play->sceneNum, this->actor.params, GI_HEART_CONTAINER_2);
+        } else {          
+            GetItemEntry getItemEntry = Randomizer_GetItemFromActor(this->actor.id, play->sceneNum,
+                                                                        this->actor.params, GI_HEART_CONTAINER_2);
             GiveItemEntryFromActor(&this->actor, play, getItemEntry, 30.0f, 40.0f);
         }
     }

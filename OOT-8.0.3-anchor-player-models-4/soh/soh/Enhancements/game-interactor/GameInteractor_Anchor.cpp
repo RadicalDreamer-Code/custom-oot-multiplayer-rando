@@ -18,9 +18,12 @@
 void QuestionManager::OnQuestionAnswered(uint8_t option) {
     auto answerId = QuestionManager::get().getCurrentQuestion()->answerId;
     if (answerId == option) {
-        Audio_PlaySoundGeneral(NA_SE_EV_SMALL_DOG_BARK, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        PunishmentManager::SpawnRandomItem();
+        Audio_PlaySoundGeneral(NA_SE_SY_CORRECT_CHIME, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        Audio_PlaySoundGeneral(NA_SE_VO_FR_LAUGH_0, &D_801333D4, 8, &D_801333E0, &D_801333E0, &D_801333E8);
     } else {
-        Audio_PlaySoundGeneral(NA_SE_EN_GANON_LAUGH, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        Audio_PlaySoundGeneral(NA_SE_SY_ERROR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        Audio_PlaySoundGeneral(NA_SE_EN_GANON_LAUGH, &D_801333D4, 8, &D_801333E0, &D_801333E0, &D_801333E8);
         auto punishment = PunishmentManager::GetRandomPunishment();
         PunishmentManager::ExecutePunishment(punishment);
         // Signal Server to execute the punishment on all clients

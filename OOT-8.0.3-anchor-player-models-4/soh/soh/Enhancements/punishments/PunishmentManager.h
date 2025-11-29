@@ -19,8 +19,9 @@ enum class PunishmentType {
 
 class PunishmentManager {
   public:
-    static void SpawnEnemy(ActorID actorId, int16_t params = 0, int count = 1, float spawnDistanceToLink = 70);
+    static void SpawnActor(int16_t actorId, int16_t params = 0, int count = 1, float spawnDistanceToLink = 70, bool isItem = false);
     static void SpawnRandomEnemy();
+    static void SpawnRandomItem();
     static PunishmentType GetRandomPunishment();
     static PunishmentType GetPunishmentByValue(int8_t punishmentValue);
     static void ExecutePunishment(PunishmentType punishment);
