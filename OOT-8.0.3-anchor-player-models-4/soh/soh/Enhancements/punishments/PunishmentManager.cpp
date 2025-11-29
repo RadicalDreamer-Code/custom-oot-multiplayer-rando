@@ -24,6 +24,8 @@ u8 iceTrapWasTriggered = 0;
 u8 quizWasTriggered = 0;
 uint32_t lastIceTrapCount = 0;
 bool ignoreNextIceTrapUpdate = true;
+s32 swordDisabledFrames = 0;
+int playBubleSound = 0;
 
 static std::vector<int16_t> sDiscoveredEntrances;
 static std::deque<PunishmentType> sPendingPunishments;
@@ -220,6 +222,45 @@ void RegisterQuizCallbacks() {
     });
 }
 
+void PunishmentManager::DisableSwordForMinutes(int minutes) {
+    const int framesPerSecond = 20;
+    swordDisabledFrames = minutes * 60 * framesPerSecond;
+    playBubleSound = 1;
+    Audio_PlaySoundGeneral(NA_SE_EN_BUBLE_UP, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+}
+
+void RegisterSwordDisablingHandler() {
+    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnGameFrameUpdate>([]() {
+
+        if (!GameInteractor::IsSaveLoaded() || gPlayState == nullptr) {
+            return;
+        }
+        if (swordDisabledFrames <= 0) {
+            return;
+        }
+     
+        swordDisabledFrames--;
+
+        Player* player = GET_PLAYER(gPlayState);
+        if (player->heldItemAction == PLAYER_IA_SWORD_MASTER || player->heldItemAction == PLAYER_IA_SWORD_KOKIRI || player->heldItemAction == PLAYER_IA_SWORD_BIGGORON) {
+            player->meleeWeaponState = 0;
+            player->itemAction = PLAYER_IA_NONE;
+            player->heldItemAction = PLAYER_IA_NONE;
+        }
+
+        Actor* actor = &player->actor;
+        if (actor->colorFilterTimer <= 1) {
+            Actor_SetColorFilter(actor, 0, 255, 0, 40); 
+            if (playBubleSound == 0) Audio_PlaySoundGeneral(NA_SE_EN_BUBLE_LAUGH, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+            playBubleSound = (playBubleSound + 1) % 4;
+        }
+
+        if (swordDisabledFrames == 0) {
+            actor->colorFilterTimer = 0;
+        }
+    });
+}
+
 void PunishmentManager::SpawnEnemy(ActorID actorId, int16_t params, int count, float spawnDistanceToLink) {
     Player* player = GET_PLAYER(gPlayState);
         player->invincibilityTimer = 60; // Invincibility, damit man nicht instant nach dem Spawn gedamaged wird
@@ -262,7 +303,7 @@ PunishmentType PunishmentManager::GetRandomPunishment() {
 
 PunishmentType PunishmentManager::GetRandomPunishment() {
     // CAREFUL: max muss der letzte enum entry sein
-    int max = static_cast<int>(PunishmentType::DecreaseHealth);
+    int max = static_cast<int>(PunishmentType::DisableSword);
     return static_cast<PunishmentType>(rand() % (max + 1));
 }
 
@@ -289,6 +330,9 @@ void PunishmentManager::ExecutePunishment(PunishmentType punishment) {
             break;
         case PunishmentType::DecreaseHealth:
             DecreaseHealth();
+            break;
+        case PunishmentType::DisableSword:
+            DisableSwordForMinutes(15);
             break;
         default:
             break;
@@ -395,5 +439,6 @@ void PunishmentManager::InitPunishmentManager() {
     RegisterDiscoveredEntrancesTracker();
     RegisterPunishmentQueueExecution();
     RegisterQuizCallbacks();
+    RegisterSwordDisablingHandler();
     lastIceTrapCount = gSaveContext.sohStats.count[COUNT_ICE_TRAPS];
 }
