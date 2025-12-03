@@ -28,36 +28,46 @@ bool ignoreNextIceTrapUpdate = true;
 s32 swordDisabledFrames = 0;
 int playBubleSound = 0;
 
-static std::vector<int16_t> sDiscoveredEntrances;
-static std::deque<PunishmentType> sPendingPunishments;
-
 struct ActorSpawnInfo {
     int16_t actorId;
     s16 params = 0; // Wird oft benötigt, um den Gegner korrekt zu spawnen oder manchmal für verschiedene Gegner Varianten. Im jeweiligen Header des Actors findet man da oft Infos zu, sonst im .c Skript des Actors nach actor.params suchen.
     int count = 1; // Wie oft der Gegner gespawnt werden soll
     int spawnDistanceToLink = 70; // Abstand zu Link beim Spawn
     bool isCollectable = false; // Muss true sein, wenn man collectable Items wie Rubine oder Herzen spawnen will etc.
+    bool spawnWithEffect = true; // Bestimmt, ob ein Ganon Warp Effekt beim Spawn auftritt
 };
+
+struct DelayedSpawnInfo {
+    int16_t actorId;
+    s16 params = 0;
+    Vec3f_ position;
+    int16_t yRot;
+    int16_t framesDelay = 30;
+};
+
+static std::vector<int16_t> sDiscoveredEntrances;
+static std::deque<PunishmentType> sPendingPunishments;
+static std::deque<DelayedSpawnInfo> sPendingEnemySpawns;
 
 static const std::vector<ActorSpawnInfo> ENEMY_LIST = {
     // https : // zeldamodding.net/zelda-oot-enemy-actor-list/
     // Actor IDs: https://wiki.cloudmodding.com/oot/Actor_List_(Variables)
+    { ACTOR_EN_DH, 0, 1, 70, false, false },      // Großer Hirnsauger
     { ACTOR_EN_PO_SISTERS, 8 },  // Purple Poe Forest Temple Mini Boss
     { ACTOR_EN_NY, 0, 3 },       // Spike
     { ACTOR_EN_SB, 0, 3 },       // Shellblade / Muschel
     { ACTOR_EN_CLEAR_TAG, 1 , 3},// Arwing
     { ACTOR_EN_TORCH2, 0 },      // Dark Link
-    { ACTOR_EN_DH, 0},           // Großer Hirnsauger
     { ACTOR_EN_EIYER, 10, 3 },   // Rochenviecher aus Jabu-Jabu
     { ACTOR_EN_BUBBLE, 0 , 5 },  // Blasengegner aus Jabu-Jabu
     { ACTOR_EN_ZF, -1 , 2 },     // Lizalfos
     { ACTOR_EN_ZF, -2 , 2 },     // Dinolfos
     { ACTOR_EN_FLOORMAS, 0 },    // Floormaster
-    { ACTOR_EN_WALLMAS, 0 },     // Wallmaster
+    { ACTOR_EN_WALLMAS, 0, 1, 70, false, false }, // Wallmaster
     { ACTOR_EN_TP, -1, 3 },      // Elektrowurmvieh
     { ACTOR_EN_SKB, 8, 3 },      // Stalchild
     { ACTOR_EN_GOMA, 6, 3 },     // Mini Goma
-    { ACTOR_EN_TEST, 3, 2 },     // Stalfos
+    { ACTOR_EN_TEST, 2, 2 },     // Stalfos
     { ACTOR_EN_RD, 0 },          // Redead
     { ACTOR_EN_RD, 0x00FE },     // Gibdo
     { ACTOR_EN_DODONGO, 0, 2 },  // Dogongo
@@ -76,7 +86,7 @@ static const std::vector<ActorSpawnInfo> ENEMY_LIST = {
     { ACTOR_EN_WF, 9, 2 },       // White Wolfos 
     { ACTOR_EN_IK, 8 },          // Iron Knuckle
     { ACTOR_EN_IK, 8, 10 },      // Death Penalty :D
-    { ACTOR_EN_AM, 1, 2, 10},    // Armos, Statuending
+    //{ ACTOR_EN_AM, 1, 2, 10},    // Armos, Statuending
     { ACTOR_EN_BILI, -1, 3},     // Qualle/Stinger
     { ACTOR_EN_CROW, 1, 5 },     // Guay evtl TODO: soll nicht nachspawnen, custom param
     { ACTOR_EN_BW, 0, 3},        // Feuerschnecke
@@ -85,8 +95,9 @@ static const std::vector<ActorSpawnInfo> ENEMY_LIST = {
     { ACTOR_EN_DEKUBABA, 2, 3},  // Small Deku Baba
     { ACTOR_EN_DODOJR, 0, 3 },   // Kleiner Dodongo
     { ACTOR_EN_BB, -2, 3 },      // Fliegender Totenkopf Variante
-    { ACTOR_EN_BB, -1, 2 },      // Fliegender Totenkopf Variante
-    { ACTOR_EN_PO_FIELD, 0, 2}   // Poe spawnen sehr spät aber ok TODO: Evtl mit Custom Param schneller spawnen
+    { ACTOR_EN_BB, -1, 2 }      // Fliegender Totenkopf Variante
+    // { ACTOR_EN_POH, 2, 2 }, // Graveyard Pow spawnen irgendwie nicht
+    // { ACTOR_EN_PO_FIELD, 0, 2}   // Poe spawnen sehr spät aber ok TODO: Evtl mit Custom Param schneller spawnen
     // { ACTOR_EN_GELDB, 0 },       // Gerudo Kriegerin braucht Carpenter zum laden oder so
     // { ACTOR_EN_DEKUNUTS, 0, 3 },  // Mad Scrub, es spawnen keine Nüsse, wenn sie schießen
     // { ACTOR_EN_BA, 0 },           // Tentacle funktioniert zwar, aber spawnt zu tief und bräuchte nen Sonder Case für spawning Höhe
@@ -269,7 +280,34 @@ void RegisterSwordDisablingHandler() {
     });
 }
 
-void PunishmentManager::SpawnActor(int16_t actorId, int16_t params, int count, float spawnDistanceToLink, bool isCollectable) {
+void RegisterEnemySpawner() {
+    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnGameFrameUpdate>([]() {
+        if (!GameInteractor::IsSaveLoaded() || gPlayState == nullptr) {
+            return;
+        }
+        if (sPendingEnemySpawns.size() <= 0) {
+            return;
+        }
+
+        for (int i = 0; i < sPendingEnemySpawns.size(); i++) {
+            sPendingEnemySpawns[i].framesDelay--;
+        }
+
+        if (sPendingEnemySpawns[0].framesDelay > 0)
+            return;
+
+        while (sPendingEnemySpawns.size() > 0 && sPendingEnemySpawns[0].framesDelay <= 0) {
+            DelayedSpawnInfo spawnInfo = sPendingEnemySpawns.front();
+            sPendingEnemySpawns.pop_front();
+
+            auto actor = Actor_Spawn(&gPlayState->actorCtx, gPlayState, spawnInfo.actorId, spawnInfo.position.x,
+                        spawnInfo.position.y, spawnInfo.position.z, 0, spawnInfo.yRot, 0, spawnInfo.params, 0);
+            Actor_SetColorFilter(actor, 0x8000, 255, 0, 20); 
+        }
+    });
+}
+
+void PunishmentManager::SpawnActor(int16_t actorId, int16_t params, int count, float spawnDistanceToLink, bool isCollectable, bool spawnWithEffect) {
     Player* player = GET_PLAYER(gPlayState);
         //player->invincibilityTimer = 60; // Invincibility, damit man nicht instant nach dem Spawn gedamaged wird
     for (int i = 0; i < count; i++) {
@@ -292,10 +330,25 @@ void PunishmentManager::SpawnActor(int16_t actorId, int16_t params, int count, f
                 Item_DropCollectible(gPlayState, &position, actorId);
             }
         } else {
-            Actor_Spawn(&gPlayState->actorCtx, gPlayState, actorId, position.x, position.y, position.z, 0, enemyRotY, 0, params, 0);
+            if (spawnWithEffect) {
+                auto spawnEffect = Actor_Spawn(&gPlayState->actorCtx, gPlayState, ACTOR_EN_FHG_FIRE, position.x,
+                                               position.y + 3.0f, position.z, 0x4000, 0, 0, 40, 0);
+                spawnEffect->scale.z = 2.0f;
+                spawnEffect->scale.y = 4.0f;
+                spawnEffect->scale.x = 4.0f;
+                DelayedSpawnInfo spawnInfo;
+                spawnInfo.actorId = actorId;
+                spawnInfo.params = params;
+                spawnInfo.position = position;
+                spawnInfo.yRot = enemyRotY;
+                sPendingEnemySpawns.push_back(spawnInfo);
+                GameInteractor::RawAction::ElectrocutePlayer();
+            } else {
+                Actor_Spawn(&gPlayState->actorCtx, gPlayState, actorId, position.x, position.y, position.z, 0, enemyRotY, 0, params, 0);
+            }
         }    
         if (actorId == ACTOR_EN_DH) {
-            SpawnActor(ACTOR_EN_DHA, 0, 4);
+            SpawnActor(ACTOR_EN_DHA, 0, 4, 70, false, false);
         }
     }
 }
@@ -303,14 +356,14 @@ void PunishmentManager::SpawnActor(int16_t actorId, int16_t params, int count, f
 void PunishmentManager::SpawnRandomEnemy() {
     enemyIndex = rand() % ENEMY_LIST.size();
     SpawnActor(ENEMY_LIST[enemyIndex].actorId, ENEMY_LIST[enemyIndex].params, ENEMY_LIST[enemyIndex].count,
-               ENEMY_LIST[enemyIndex].spawnDistanceToLink);
+               ENEMY_LIST[enemyIndex].spawnDistanceToLink, false, ENEMY_LIST[enemyIndex].spawnWithEffect);
     //enemyIndex = (enemyIndex + 1) % ENEMY_LIST.size();
 }
 
 void PunishmentManager::SpawnRandomItem() {
     itemIndex = rand() % ITEM_LIST.size();
     SpawnActor(ITEM_LIST[itemIndex].actorId, ITEM_LIST[itemIndex].params, ITEM_LIST[itemIndex].count,
-               ITEM_LIST[itemIndex].spawnDistanceToLink, ITEM_LIST[itemIndex].isCollectable);
+               ITEM_LIST[itemIndex].spawnDistanceToLink, ITEM_LIST[itemIndex].isCollectable, false);
     // itemIndex = (itemIndex + 1) % ITEM_LIST.size();
 }
 
@@ -466,5 +519,6 @@ void PunishmentManager::InitPunishmentManager() {
     RegisterPunishmentQueueExecution();
     RegisterQuizCallbacks();
     RegisterSwordDisablingHandler();
+    RegisterEnemySpawner();
     lastIceTrapCount = gSaveContext.sohStats.count[COUNT_ICE_TRAPS];
 }
