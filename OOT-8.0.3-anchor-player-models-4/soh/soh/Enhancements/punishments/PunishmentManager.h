@@ -31,5 +31,6 @@ class PunishmentManager {
     static void IncreaseHealth();
     static void DisableSwordForMinutes(int minutes);
     static void InitPunishmentManager();
+    static void SetIceTrapTriggered();
     static PunishmentType lastPunishmentType;
 };

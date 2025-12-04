@@ -211,16 +211,16 @@ void RegisterQuizCallbacks() {
 
         if (CHECK_BTN_ALL(input[0].press.button, BTN_DUP) && !quizWasTriggered) {
             // Nur für Debug Zwecke. Später auskommentieren
-            iceTrapWasTriggered = 1;
+            //iceTrapWasTriggered = 1;
         } 
 
         auto currentIceTrapCount = gSaveContext.sohStats.count[COUNT_ICE_TRAPS];
         if (currentIceTrapCount > lastIceTrapCount) {
             lastIceTrapCount = currentIceTrapCount;
             if (ignoreNextIceTrapUpdate) {
-                ignoreNextIceTrapUpdate = false;
+                //ignoreNextIceTrapUpdate = false;
             } else {
-                iceTrapWasTriggered = 1;
+                //iceTrapWasTriggered = 1;
             }
         }
 
@@ -506,6 +506,11 @@ void PunishmentManager::DecreaseHealth() {
     Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
     EffectSsDeadDb_Spawn(gPlayState, &vec, &zeroVec, &zeroVec, 150, 0, 120, 0, 200, 200, 30, 0, 80, 1, 9, 0);
 }
+
+void PunishmentManager::SetIceTrapTriggered() {
+    iceTrapWasTriggered = 1;
+}
+
 
 void PunishmentManager::IncreaseHealth() {
     gSaveContext.healthCapacity += 0x10;

@@ -730,7 +730,7 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
                     QuestionManager::get().addQuestion(question);
                 }
 
-                QuestionManager::get().currentIndex = payload["lastQuestionIndex"];
+                QuestionManager::get().currentIndex = (int) payload["lastIndex"];
                 
                 SPDLOG_INFO("[Anchor] Loaded {} questions from server", questionsArray.size());
                 Anchor_DisplayMessage({
@@ -738,6 +738,7 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
                 });
             }
         } catch (const std::exception& e) {
+            Anchor_DisplayMessage({ .message = "Error" });
             SPDLOG_ERROR("[Anchor] Error parsing questions: {}", e.what());
         }
     }
@@ -768,6 +769,9 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
         PunishmentManager::IncreaseHealth();
     }
 
+    if (payload["type"] == "ICE_TRAP") {
+        PunishmentManager::SetIceTrapTriggered();
+    }
 }
 
 void Anchor_PushSaveStateToRemote() {

@@ -133,9 +133,16 @@ export class QuizManager {
     const apiQuestions: ApiQuestion[] = await response.json();
     console.log(`Fetched ${apiQuestions.length} questions from API`);
 
+    // Filter by players
+    const selectedPlayers = ["Player1", "Player2", "LongShotEnjoyer"]
+    // TODO: FIlter apiQuestions by these selectedPlayers
+    const filteredApiQuestions = apiQuestions.filter((x) => selectedPlayers.includes(x.createdBy));
+
+    console.log(filteredApiQuestions);
+
     // Group questions by creator
     const questionsByCreator = new Map<string, ApiQuestion[]>();
-    for (const apiQ of apiQuestions) {
+    for (const apiQ of filteredApiQuestions) {
       const creator = apiQ.createdBy;
       if (!questionsByCreator.has(creator)) {
         questionsByCreator.set(creator, []);

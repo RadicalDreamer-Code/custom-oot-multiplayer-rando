@@ -57,6 +57,10 @@ interface QuestionsPacket extends BasePacket {
   lastIndex: number;
 }
 
+interface IceTrapPacket extends BasePacket {
+  type: "ICE_TRAP"
+}
+
 interface CheckTrackerData {
   hintItem: number;
   price: number;
@@ -139,6 +143,7 @@ type Packet =
   | QuestionsPacket
   | SignalPunishmentPacket
   | QuizStatePacket
+  | IceTrapPacket
   | OtherPackets;
 
 interface ServerStats {
@@ -410,6 +415,18 @@ class Client {
       }
     }
   }
+  /*
+  ICETRAP
+  GIVE_ITEM {
+  getItemId: 141,
+  modId: 1,
+  roomId: "a",
+  type: "GIVE_ITEM",
+  clientId: 6
+}
+
+
+  */
 
   handlePacket(packet: Uint8Array) {
     try {
@@ -424,6 +441,10 @@ class Client {
 
       if (packetObject.type === "GIVE_ITEM") {
         console.log("ITTEEEEM");
+        console.log(packetObject);
+        const incomingItemId = packetObject.getItemId as number;
+        // 141 => GI_ICE_TRAP WOOOOW!!
+        if (incomingItemId === 141) this.sendPacket({type: "ICE_TRAP" })
       }
 
       if (packetObject.type === "CLIENT_UPDATE") {
@@ -925,19 +946,22 @@ function sendIncreaseHealth(client: Client) {
 function sendQuestions(client: Client) {
   // Get the player name from client data
   const playerName = client.data.name || client.data.playerName;
+  console.log("Sending to the SOH Client " + playerName);
 
   if (!playerName) {
     console.log(`Client ${client.id} has no name, cannot assign questions`);
-    let lastIndex: number = 0;
+    let lastIndex: number = 1;
     lastIndex = quizState[playerName]
       ? quizState[playerName].currentQuestionIndex
-      : 0;
+      : 1;
     return client.sendPacket({
       type: "RECEIVE_QUESTIONS",
       message: JSON.stringify({ questionGame: { questions: [] } }),
       lastIndex: lastIndex,
     });
   }
+  
+  console.log(quizAssignments)
 
   // Check if we have shuffled assignments loaded
   if (quizAssignments.size > 0 && quizAssignments.has(playerName)) {
@@ -948,25 +972,26 @@ function sendQuestions(client: Client) {
     return client.sendPacket({
       type: "RECEIVE_QUESTIONS",
       message: JSON.stringify(playerData),
+      lastIndex: Object.keys(quizState).length !== 0 ? quizState[playerName].currentQuestionIndex + 1: 1,
     });
   }
 
   // Fallback to old method
-  const questions = assignments.get("player-1")?.map((q) => q.question) || [];
-  const playerData: PlayerData = {
-    questionGame: {
-      questions: assignments.get("player-1") || [],
-    },
-  };
-  console.log(
-    `Sending fallback questions to ${playerName || "unknown"} (client ${
-      client.id
-    })`
-  );
-  return client.sendPacket({
-    type: "RECEIVE_QUESTIONS",
-    message: JSON.stringify(playerData),
-  });
+  // const questions = assignments.get("player-1")?.map((q) => q.question) || [];
+  // const playerData: PlayerData = {
+  //   questionGame: {
+  //     questions: assignments.get("player-1") || [],
+  //   },
+  // };
+  // console.log(
+  //   `Sending fallback questions to ${playerName || "unknown"} (client ${
+  //     client.id
+  //   })`
+  // );
+  // return client.sendPacket({
+  //   type: "RECEIVE_QUESTIONS",
+  //   message: JSON.stringify(playerData),
+  // });
 }
 
 function sendDisable(client: Client, message: string) {

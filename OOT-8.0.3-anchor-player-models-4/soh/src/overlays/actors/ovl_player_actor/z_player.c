@@ -6656,7 +6656,7 @@ s32 func_8083E5A8(Player* this, PlayState* play) {
 
         // Sets ice trap flag from Header1 to trigger the quiz later inside z_play.c
         if (IS_RANDO) {
-            //iceTrapWasTriggered = 1;
+           // iceTrapWasTriggered = 1;
         }
 
         return 1;
