@@ -1,8 +1,8 @@
 import { encodeHex } from "https://deno.land/std@0.208.0/encoding/hex.ts";
 import { readLines } from "https://deno.land/std@0.208.0/io/read_lines.ts";
 import { writeAll } from "https://deno.land/std@0.208.0/streams/write_all.ts";
-import { importantItem, ItemID } from "./gameId.ts";
-import { PlayerData, QuizManager } from "./questionGame/quizManager.ts";
+import { importantItem, importantItemNames, ItemID } from "./gameId.ts";
+import { QuizManager } from "./questionGame/quizManager.ts";
 
 // TODO: make nicer later
 let currentMaxHealth: number = -1;
@@ -58,7 +58,7 @@ interface QuestionsPacket extends BasePacket {
 }
 
 interface IceTrapPacket extends BasePacket {
-  type: "ICE_TRAP"
+  type: "ICE_TRAP";
 }
 
 interface CheckTrackerData {
@@ -444,7 +444,16 @@ class Client {
         console.log(packetObject);
         const incomingItemId = packetObject.getItemId as number;
         // 141 => GI_ICE_TRAP WOOOOW!!
-        if (incomingItemId === 141) this.sendPacket({type: "ICE_TRAP" })
+        if (incomingItemId === 141) {
+          const playerName =
+            this.data.name || this.data.playerName || `Client ${this.id}`;
+          const logContent = `${getCurrentDateTime()} - Ice Trap received by ${playerName}\n`;
+          appendToFile(`logs/${currentTime}.txt`, logContent);
+          console.log(
+            `Ice Trap received by ${playerName} at ${getCurrentDateTime()}`
+          );
+          this.sendPacket({ type: "ICE_TRAP" });
+        }
       }
 
       if (packetObject.type === "CLIENT_UPDATE") {
@@ -647,14 +656,18 @@ class Room {
       var valueToCheck = packetObject.getItemId;
       if (importantItem.includes(valueToCheck as ItemID)) {
         console.log("Value is in the importantItem array.");
+        const itemName =
+          importantItemNames[valueToCheck as ItemID] || "Unknown Item";
         var newContent =
           getCurrentDateTime() +
           " - " +
-          packetObject.getItemId +
+          itemName +
           " was found by " +
-          sender.id +
+          // sender.id +
+          // " " +
+          sender.data.name +
           "\n";
-        appendToFile(currentTime + ".txt", newContent);
+        appendToFile("logs/" + currentTime + ".txt", newContent);
       } else {
         console.log("Value is not in the importantItem array.");
       }
@@ -960,8 +973,8 @@ function sendQuestions(client: Client) {
       lastIndex: lastIndex,
     });
   }
-  
-  console.log(quizAssignments)
+
+  console.log(quizAssignments);
 
   // Check if we have shuffled assignments loaded
   if (quizAssignments.size > 0 && quizAssignments.has(playerName)) {
@@ -972,7 +985,10 @@ function sendQuestions(client: Client) {
     return client.sendPacket({
       type: "RECEIVE_QUESTIONS",
       message: JSON.stringify(playerData),
-      lastIndex: Object.keys(quizState).length !== 0 ? quizState[playerName].currentQuestionIndex + 1: 1,
+      lastIndex:
+        Object.keys(quizState).length !== 0
+          ? quizState[playerName].currentQuestionIndex + 1
+          : 1,
     });
   }
 
