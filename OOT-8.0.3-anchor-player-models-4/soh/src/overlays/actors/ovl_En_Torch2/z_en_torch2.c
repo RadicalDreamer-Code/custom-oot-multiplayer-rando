@@ -668,9 +668,12 @@ void EnTorch2_Update(Actor* thisx, PlayState* play2) {
          *  lock on Link. If he presses A while not locked on, he'll put his sword away.
          *  This clears his held item param permanently and makes him unable to attack.
          */
-        input->cur.button = 0;
-        input->press.button = 0;
-        this->linearVelocity = 0.0f;
+        // Edit: Dont do that for custom param 8
+        if (this->actor.params != 8) {
+            input->cur.button = 0;
+            input->press.button = 0;
+            this->linearVelocity = 0.0f;
+        }
     }
 
     play->playerUpdate(this, play, input);
