@@ -90,6 +90,7 @@ class QuestionManager {
     const Question* getCurrentQuestion() const;
     bool nextQuestion();
     bool previousQuestion();
+    bool hasQuestionsLeft();
     void reset();
     size_t currentIndex = 0;
 
