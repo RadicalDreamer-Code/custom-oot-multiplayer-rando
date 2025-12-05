@@ -211,7 +211,7 @@ void RegisterQuizCallbacks() {
 
         if (CHECK_BTN_ALL(input[0].press.button, BTN_DUP) && !quizWasTriggered) {
             // Nur für Debug Zwecke. Später auskommentieren
-            //iceTrapWasTriggered = 1;
+            iceTrapWasTriggered = 1;
         } 
 
         auto currentIceTrapCount = gSaveContext.sohStats.count[COUNT_ICE_TRAPS];
@@ -411,7 +411,7 @@ void PunishmentManager::ExecutePunishment(PunishmentType punishment) {
             DecreaseHealth();
             break;
         case PunishmentType::DisableSword:
-            DisableSwordForMinutes(15);
+            DisableSwordForMinutes(10);
             break;
         default:
             break;

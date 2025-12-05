@@ -18,6 +18,7 @@ interface Question {
   id: number;
   question: string;
   options: string[];
+  difficulty: string;
   answerId: number;
   createdBy?: string;
 }
@@ -134,7 +135,7 @@ export class QuizManager {
     console.log(`Fetched ${apiQuestions.length} questions from API`);
 
     // Filter by players
-    const selectedPlayers = ["Player1", "Player2", "LongShotEnjoyer"]
+    const selectedPlayers = ["Player1", "Player2", "Player3", "LongShotEnjoyer"]
     // TODO: FIlter apiQuestions by these selectedPlayers
     const filteredApiQuestions = apiQuestions.filter((x) => selectedPlayers.includes(x.createdBy));
 
@@ -153,41 +154,151 @@ export class QuizManager {
     const creators = Array.from(questionsByCreator.keys());
     console.log(`Found questions from ${creators.length} creators:`, creators);
 
-    // Assign questions to players (each player gets questions NOT created by them)
-    const assignments = new Map<string, Question[]>();
+    // Assign questions to players (each player gets questions NOT created by them,
+// no question is assigned twice, and questions are balanced per difficulty)
+const assignments = new Map<string, Question[]>();
 
-    for (const player of creators) {
-      const playerQuestions: Question[] = [];
+// Hilfsfunktion für Difficulty-Ranking (falls string-basiert)
+const difficultyRank = (d: string | number): number => {
+  if (typeof d === "number") return d;
 
-      // Get questions from all other creators
-      for (const creator of creators) {
-        if (creator !== player) {
-          const creatorQuestions = questionsByCreator.get(creator)!;
+  const order = ["Easy", "Medium", "Difficult"];
+  const idx = order.indexOf(d.toUpperCase());
+  return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+};
 
-          for (const apiQ of creatorQuestions) {
-            const correctAnswerIndex = apiQ.answers.findIndex(
-              (a) => a.isCorrect
-            );
+// Typ für API-Fragen
+type ApiQuestion = {
+  questionText: string;
+  answers: { text: string; isCorrect: boolean }[];
+  createdBy: string;
+  difficulty: string | number;
+};
 
-            const question: Question = {
-              id: playerQuestions.length + 1,
-              question: apiQ.questionText,
-              options: apiQ.answers.map((a) => a.text),
-              answerId: correctAnswerIndex !== -1 ? correctAnswerIndex : 0,
-              createdBy: apiQ.createdBy,
-            };
+// 1. Alle Fragen flatten
+const allApiQuestions: ApiQuestion[] = [];
 
-            playerQuestions.push(question);
-          }
-        }
-      }
+for (const [creator, creatorQuestions] of questionsByCreator.entries()) {
+  for (const apiQ of creatorQuestions) {
+    allApiQuestions.push(apiQ);
+  }
+}
 
-      // Shuffle the questions for this player
-      const shuffled = this.shuffle(playerQuestions);
-      assignments.set(player, shuffled);
+// Alle vorkommenden Schwierigkeitsgrade bestimmen
+const difficulties = Array.from(
+  new Set(allApiQuestions.map((q) => q.difficulty))
+);
 
-      console.log(`Assigned ${shuffled.length} questions to ${player}`);
+// Zwischen-Speicher für Zuweisungen (noch ohne ID)
+const tempAssignments = new Map<string, Question[]>();
+for (const player of creators) {
+  tempAssignments.set(player, []);
+}
+
+// 2. Pro Schwierigkeitsgrad gleichmäßig auf Spieler verteilen
+for (const difficulty of difficulties) {
+  const questionsOfDifficulty = allApiQuestions.filter(
+    (q) => q.difficulty === difficulty
+  );
+
+  // Fragen dieses Schwierigkeitsgrads mischen
+  const shuffledQuestions = this.shuffle([...questionsOfDifficulty]);
+
+  const total = shuffledQuestions.length;
+  const numPlayers = creators.length;
+
+  // Ziel-Anzahl pro Spieler für diesen Schwierigkeitsgrad
+  const base = Math.floor(total / numPlayers);
+  const remainder = total % numPlayers;
+
+  const targetPerPlayer = new Map<string, number>();
+  creators.forEach((player, index) => {
+    // Die ersten `remainder` Spieler bekommen eine Frage mehr
+    targetPerPlayer.set(player, base + (index < remainder ? 1 : 0));
+  });
+
+  const assignedCount = new Map<string, number>();
+  creators.forEach((player) => assignedCount.set(player, 0));
+
+  for (const apiQ of shuffledQuestions) {
+    // Spielerreihenfolge für diese Frage mischen, damit es fair bleibt
+    const shuffledPlayers = this.shuffle([...creators]);
+    let assigned = false;
+
+    for (const player of shuffledPlayers) {
+      if (player === apiQ.createdBy) continue; // keine eigenen Fragen
+
+      const current = assignedCount.get(player)!;
+      const target = targetPerPlayer.get(player)!;
+
+      if (current >= target) continue;
+
+      const correctAnswerIndex = apiQ.answers.findIndex((a) => a.isCorrect);
+
+      const question: Question = {
+        // ID setzen wir später nach der finalen Sortierung
+        id: 0,
+        question: apiQ.questionText,
+        options: apiQ.answers.map((a) => a.text),
+        answerId: correctAnswerIndex !== -1 ? correctAnswerIndex : 0,
+        createdBy: apiQ.createdBy,
+        // NEU: Difficulty mitnehmen
+        difficulty: apiQ.difficulty as any,
+      };
+
+      tempAssignments.get(player)!.push(question);
+      assignedCount.set(player, current + 1);
+      assigned = true;
+      break;
     }
+
+    if (!assigned) {
+      // Kann passieren, wenn z.B. alle Fragen von einem einzigen Creator kommen
+      // und dieser Creator nach der Zielverteilung mehr Fragen bekommen soll,
+      // seine eigenen aber nicht kriegen darf.
+      console.warn(
+        `Could not assign question "${apiQ.questionText}" for difficulty ${String(
+          difficulty
+        )}`
+      );
+    }
+  }
+}
+
+// 3. Für jeden Spieler: Fragen nach Schwierigkeit gruppieren,
+//    innerhalb der Difficulty shufflen, Difficulties sortieren,
+//    IDs neu durchzählen.
+for (const player of creators) {
+  const playerQuestions = tempAssignments.get(player)!;
+
+  const byDifficulty = new Map<string | number, Question[]>();
+  for (const q of playerQuestions) {
+    const key = q.difficulty;
+    const list = byDifficulty.get(key) ?? [];
+    list.push(q);
+    byDifficulty.set(key, list);
+  }
+
+  // Schwierigkeitsgrade sortieren (easy -> medium -> hard oder numerisch)
+  const sortedDifficulties = Array.from(byDifficulty.keys()).sort(
+    (a, b) => difficultyRank(a) - difficultyRank(b)
+  );
+
+  const finalQuestions: Question[] = [];
+  for (const diff of sortedDifficulties) {
+    const group = byDifficulty.get(diff)!;
+    const shuffledGroup = this.shuffle(group); // innerhalb der Schwierigkeit mischen
+    finalQuestions.push(...shuffledGroup);
+  }
+
+  // IDs pro Spieler neu setzen
+  finalQuestions.forEach((q, index) => {
+    q.id = index + 1;
+  });
+
+  assignments.set(player, finalQuestions);
+  console.log(`Assigned ${finalQuestions.length} questions to ${player}`);
+}
 
     // Save all assignments to a single file with current date
     const now = new Date();
@@ -314,6 +425,7 @@ export class QuizManager {
           id: index + 1,
           question: q.question,
           options: q.options,
+          difficulty: q.difficulty,
           answerId: q.answerId,
         }));
 
