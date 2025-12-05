@@ -867,7 +867,15 @@ async function setupKeyListener() {
           break;
         }
         case "f": {
-          console.log(`\nFetching questions from API...`);
+          console.log(`\nLoading shuffled questions file...`);
+          try {
+            await loadShuffledQuestions();
+            console.log(`Successfully loaded shuffled questions!`);
+          } catch (error) {
+            console.error(
+              `Failed to load shuffled questions: ${error.message}`
+            );
+            console.log(`\nFetching questions from API...`);
           try {
             await manager.requestAllPlayerQuestions(
               "oot",
@@ -878,6 +886,7 @@ async function setupKeyListener() {
             console.log(`Successfully fetched and loaded questions!`);
           } catch (error) {
             console.error(`Failed to fetch questions: ${error.message}`);
+          }
           }
           break;
         }
@@ -961,14 +970,13 @@ function sendQuestions(client: Client) {
     });
   }
   
-  console.log(quizAssignments)
-
   // Check if we have shuffled assignments loaded
   if (quizAssignments.size > 0 && quizAssignments.has(playerName)) {
     const playerData = quizAssignments.get(playerName);
     console.log(
       `Sending ${playerData.questionGame.questions.length} shuffled questions to ${playerName} (client ${client.id})`
     );
+    //console.log(playerData)
     return client.sendPacket({
       type: "RECEIVE_QUESTIONS",
       message: JSON.stringify(playerData),

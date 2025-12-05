@@ -16,7 +16,10 @@
 
 // TODO: Bananen-Code - Die Funktion sollte man glaube ich anders aufbauen
 void QuestionManager::OnQuestionAnswered(uint8_t option) {
-    auto answerId = QuestionManager::get().getCurrentQuestion()->answerId;
+    auto currentQuestion = QuestionManager::get().getCurrentQuestion();
+    if (currentQuestion == nullptr)
+        return;
+    auto answerId = currentQuestion->answerId;
     if (answerId == option) {
         PunishmentManager::SpawnRandomItem();
         Audio_PlaySoundGeneral(NA_SE_SY_CORRECT_CHIME, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
@@ -49,17 +52,14 @@ void QuestionManager::addQuestion(const Question& q) {
 }
 
 const Question* QuestionManager::getCurrentQuestion() const {
-    if (questions.empty())
+    if (questions.empty() || !QuestionManager::get().hasQuestionsLeft())
         return nullptr;
     return &questions[currentIndex];
 }
 
 bool QuestionManager::nextQuestion() {
-    if (currentIndex + 1 < questions.size()) {
-        currentIndex++;
-        return true;
-    }
-    return false; // no more questions
+    currentIndex++;
+    return currentIndex < questions.size();
 }
 
 bool QuestionManager::previousQuestion() {
@@ -68,6 +68,10 @@ bool QuestionManager::previousQuestion() {
         return true;
     }
     return false; // already at the first question
+}
+
+bool QuestionManager::hasQuestionsLeft() {
+    return currentIndex < questions.size();
 }
 
 void QuestionManager::reset() {
@@ -733,8 +737,8 @@ void GameInteractorAnchor::HandleRemoteJson(nlohmann::json payload) {
                 QuestionManager::get().currentIndex = (int) payload["lastIndex"];
                 
                 SPDLOG_INFO("[Anchor] Loaded {} questions from server", questionsArray.size());
-                Anchor_DisplayMessage({
-                    .message = "Questions received from server!"
+                Anchor_DisplayMessage({ .message =
+                          "Questions received from server! Current index: " + std::to_string(QuestionManager::get().currentIndex)
                 });
             }
         } catch (const std::exception& e) {

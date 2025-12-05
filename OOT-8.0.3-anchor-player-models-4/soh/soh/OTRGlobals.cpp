@@ -2538,7 +2538,7 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
 
             const Question* questionData = QuestionManager::get().getCurrentQuestion();
             
-            if (questionData->options.size() > 0) {
+            if (questionData != nullptr && questionData->options.size() > 0) {
                 std::string question = questionData->question;
                 std::string option1 = questionData->options[0];
                 std::string option2 = questionData->options[1];
@@ -2551,7 +2551,7 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
                 messageEntry = CustomMessage(message, message, message);
                 messageEntry.Format();
             } else {
-                messageEntry = CustomMessage("Error", "Error", "Error");
+                messageEntry = CustomMessage("Keine Fragen mehr übrig!", "Keine Fragen mehr übrig!", "Keine Fragen mehr übrig!");
                 messageEntry.Format();
             }
 

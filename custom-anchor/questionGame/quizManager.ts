@@ -246,6 +246,17 @@ for (const difficulty of difficulties) {
         difficulty: apiQ.difficulty as any,
       };
 
+      // Shuffle options and update answerId accordingly
+          const correctOption = question.options[question.answerId];
+          const shuffledOptions = this.shuffle(question.options);
+          question.options = shuffledOptions;
+          for (let i = 0; i < shuffledOptions.length; i++) {
+            if (correctOption == shuffledOptions[i]) {
+              question.answerId = i;
+              break;
+            }
+      }
+
       tempAssignments.get(player)!.push(question);
       assignedCount.set(player, current + 1);
       assigned = true;
