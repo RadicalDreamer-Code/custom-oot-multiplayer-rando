@@ -159,20 +159,10 @@ export class QuizManager {
 const assignments = new Map<string, Question[]>();
 
 // Hilfsfunktion für Difficulty-Ranking (falls string-basiert)
-const difficultyRank = (d: string | number): number => {
-  if (typeof d === "number") return d;
-
-  const order = ["Easy", "Medium", "Difficult"];
-  const idx = order.indexOf(d.toUpperCase());
+const difficultyRank = (d: string): number => {
+  const order = ["easy", "medium", "difficult"];
+  const idx = order.indexOf(d);
   return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
-};
-
-// Typ für API-Fragen
-type ApiQuestion = {
-  questionText: string;
-  answers: { text: string; isCorrect: boolean }[];
-  createdBy: string;
-  difficulty: string | number;
 };
 
 // 1. Alle Fragen flatten
@@ -243,7 +233,7 @@ for (const difficulty of difficulties) {
         answerId: correctAnswerIndex !== -1 ? correctAnswerIndex : 0,
         createdBy: apiQ.createdBy,
         // NEU: Difficulty mitnehmen
-        difficulty: apiQ.difficulty as any,
+        difficulty: apiQ.difficulty,
       };
 
       // Shuffle options and update answerId accordingly
