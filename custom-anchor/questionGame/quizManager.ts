@@ -135,11 +135,12 @@ export class QuizManager {
     console.log(`Fetched ${apiQuestions.length} questions from API`);
 
     // Filter by players
-    const selectedPlayers = ["Player1", "Player2", "Player3", "LongShotEnjoyer"]
+    const selectedPlayers = ["Player1", "Player2", "Player3", "Eric", "Manfred", "test"]
     // TODO: FIlter apiQuestions by these selectedPlayers
-    const filteredApiQuestions = apiQuestions.filter((x) => selectedPlayers.includes(x.createdBy));
+    //const filteredApiQuestions = apiQuestions.filter((x) => selectedPlayers.includes(x.createdBy));
+    const filteredApiQuestions = apiQuestions.filter((x) => !selectedPlayers.includes(x.createdBy));
 
-    console.log(filteredApiQuestions);
+    //console.log(filteredApiQuestions);
 
     // Group questions by creator
     const questionsByCreator = new Map<string, ApiQuestion[]>();
@@ -258,7 +259,7 @@ for (const difficulty of difficulties) {
       // und dieser Creator nach der Zielverteilung mehr Fragen bekommen soll,
       // seine eigenen aber nicht kriegen darf.
       console.warn(
-        `Could not assign question "${apiQ.questionText}" for difficulty ${String(
+        `Could not assign question from "${apiQ.createdBy}" for difficulty ${String(
           difficulty
         )}`
       );

@@ -1187,7 +1187,8 @@ void GenerateItemPool() {
   }
   //Replace all junk items with ice traps for onslaught mode
   else if (IceTrapValue.Is(ICETRAPS_ONSLAUGHT)) {
-    for (uint8_t i = 0; i < JunkPoolItems.size() - 3; i++) { // -3 Omits Huge Rupees and Deku Nuts 10
+     for (uint8_t i = 0; i < JunkPoolItems.size() - 3 && i < JunkPoolItems.size() / 2 - 3;
+           i++) { // -3 Omits Huge Rupees and Deku Nuts 10
       ReplaceMaxItem(JunkPoolItems[i], 0);
     }
   }
