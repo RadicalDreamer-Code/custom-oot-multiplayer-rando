@@ -70,3 +70,10 @@ It could be possible to swap out the messageEntry based on the selected question
 
 Start the test textbox:
 ![alt text](image-4.png)
+
+# IDEAS
+
+More punishments:
+
+- Big Head Mode
+- Swap out SFX for 5 Minutes
