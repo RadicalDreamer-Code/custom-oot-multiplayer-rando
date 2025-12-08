@@ -57,45 +57,45 @@ static const std::vector<ActorSpawnInfo> ENEMY_LIST = {
     { ACTOR_EN_NY, 0, 3 },       // Spike
     { ACTOR_EN_SB, 0, 3 },       // Shellblade / Muschel
     { ACTOR_EN_CLEAR_TAG, 1 , 3},// Arwing
-    { ACTOR_EN_TORCH2, 0 },      // Dark Link
+    { ACTOR_EN_TORCH2, 8 },      // Dark Link
     { ACTOR_EN_EIYER, 10, 3 },   // Rochenviecher aus Jabu-Jabu
     { ACTOR_EN_BUBBLE, 0 , 5 },  // Blasengegner aus Jabu-Jabu
-    { ACTOR_EN_ZF, -1 , 2 },     // Lizalfos
+    { ACTOR_EN_ZF, -1 , 3 },     // Lizalfos
     { ACTOR_EN_ZF, -2 , 2 },     // Dinolfos
-    { ACTOR_EN_FLOORMAS, 0 },    // Floormaster
+    { ACTOR_EN_FLOORMAS, 0, 2 }, // Floormaster
     { ACTOR_EN_WALLMAS, 0, 1, 70, false, false }, // Wallmaster
     { ACTOR_EN_TP, -1, 3 },      // Elektrowurmvieh
     { ACTOR_EN_SKB, 8, 3 },      // Stalchild
     { ACTOR_EN_GOMA, 6, 3 },     // Mini Goma
     { ACTOR_EN_TEST, 2, 2 },     // Stalfos
-    { ACTOR_EN_RD, 0 },          // Redead
-    { ACTOR_EN_RD, 0x00FE },     // Gibdo
-    { ACTOR_EN_DODONGO, 0, 2 },  // Dogongo
+    { ACTOR_EN_RD, 0, 2 },        // Redead
+    { ACTOR_EN_RD, 0x00FE, 2 },  // Gibdo
+    { ACTOR_EN_DODONGO, 0, 3 },  // Dogongo
     { ACTOR_EN_ST, 0, 3 },       // Skulltula
     { ACTOR_EN_FIREFLY, 0, 5 },  // Feuer Fledermaus
     { ACTOR_EN_FIREFLY, 4, 5 },  // Eis Fledermaus
     { ACTOR_EN_FIREFLY, 2, 5 },  // Fledermaus
-    { ACTOR_EN_MB, 0 },          // Moblin mit Keule
+    { ACTOR_EN_MB, 0, 2 },          // Moblin mit Keule
     { ACTOR_EN_MB, -1, 3 },      // Moblin mit Speer
     { ACTOR_EN_FD, 0 },          // Feuertänzer Miniboss
-    { ACTOR_EN_RR, 0 },          // Raubschleim
+    { ACTOR_EN_RR, 0, 2 },          // Raubschleim
     { ACTOR_EN_TITE, 0, 3 },     // Roter Arachno
     { ACTOR_EN_TITE, -2, 3 },    // Blauer Arachno 
     { ACTOR_EN_PEEHAT, 8 },      // Ananas Vieh
-    { ACTOR_EN_WF, 8, 2 },       // Wolfos 
-    { ACTOR_EN_WF, 9, 2 },       // White Wolfos 
+    { ACTOR_EN_WF, 8, 3 },       // Wolfos 
+    { ACTOR_EN_WF, 9, 3 },       // White Wolfos 
     { ACTOR_EN_IK, 8 },          // Iron Knuckle
     { ACTOR_EN_IK, 8, 10 },      // Death Penalty :D
     //{ ACTOR_EN_AM, 1, 2, 10},    // Armos, Statuending
     { ACTOR_EN_BILI, -1, 3},     // Qualle/Stinger
     { ACTOR_EN_CROW, 1, 5 },     // Guay evtl TODO: soll nicht nachspawnen, custom param
     { ACTOR_EN_BW, 0, 3},        // Feuerschnecke
-    { ACTOR_EN_FZ, 0, 2},        // Freezard
-    { ACTOR_EN_DEKUBABA, 1, 2},  // Big Deku Baba
+    { ACTOR_EN_FZ, 0, 3},        // Freezard
+    { ACTOR_EN_DEKUBABA, 1, 3},  // Big Deku Baba
     { ACTOR_EN_DEKUBABA, 2, 3},  // Small Deku Baba
-    { ACTOR_EN_DODOJR, 0, 3 },   // Kleiner Dodongo
+    { ACTOR_EN_DODOJR, 0, 5 },   // Kleiner Dodongo
     { ACTOR_EN_BB, -2, 3 },      // Fliegender Totenkopf Variante
-    { ACTOR_EN_BB, -1, 2 }      // Fliegender Totenkopf Variante
+    { ACTOR_EN_BB, -1, 3 }      // Fliegender Totenkopf Variante
     // { ACTOR_EN_POH, 2, 2 }, // Graveyard Pow spawnen irgendwie nicht
     // { ACTOR_EN_PO_FIELD, 0, 2}   // Poe spawnen sehr spät aber ok TODO: Evtl mit Custom Param schneller spawnen
     // { ACTOR_EN_GELDB, 0 },       // Gerudo Kriegerin braucht Carpenter zum laden oder so
@@ -211,7 +211,8 @@ void RegisterQuizCallbacks() {
 
         if (CHECK_BTN_ALL(input[0].press.button, BTN_DUP) && !quizWasTriggered) {
             // Nur für Debug Zwecke. Später auskommentieren
-            iceTrapWasTriggered = 1;
+            //iceTrapWasTriggered = 1;
+            //PunishmentManager::SpawnRandomEnemy();
         } 
 
         auto currentIceTrapCount = gSaveContext.sohStats.count[COUNT_ICE_TRAPS];
@@ -254,17 +255,23 @@ void RegisterSwordDisablingHandler() {
         if (!GameInteractor::IsSaveLoaded() || gPlayState == nullptr) {
             return;
         }
+        Player* player = GET_PLAYER(gPlayState);
+        printf("melee animation: %d\n", player->meleeWeaponAnimation);
         if (swordDisabledFrames <= 0) {
             return;
         }
      
         swordDisabledFrames--;
 
-        Player* player = GET_PLAYER(gPlayState);
+        //Player* player = GET_PLAYER(gPlayState);
         if (player->heldItemAction == PLAYER_IA_SWORD_MASTER || player->heldItemAction == PLAYER_IA_SWORD_KOKIRI || player->heldItemAction == PLAYER_IA_SWORD_BIGGORON) {
             player->meleeWeaponState = 0;
             player->itemAction = PLAYER_IA_NONE;
             player->heldItemAction = PLAYER_IA_NONE;
+            if (player->meleeWeaponAnimation == 17) {
+                player->meleeWeaponAnimation = 0;
+                GameInteractor::RawAction::KnockbackPlayer(0);
+            } 
         }
 
         Actor* actor = &player->actor;
